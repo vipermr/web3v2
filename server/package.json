@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "build": "cd .. && npm run build",
+    "build:server": "npm run build && npm start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["express", "form", "gmail", "api", "backend"],

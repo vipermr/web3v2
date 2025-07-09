@@ -7,6 +7,11 @@ import dotenv from 'dotenv';
 import winston from 'winston';
 import formRoutes from './routes/formRoutes.js';
 import aboutRoutes from './routes/aboutRoutes.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables first
 dotenv.config();
@@ -132,6 +137,9 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, '..', 'dist')));
+
 // XSS protection middleware
 app.use((req, res, next) => {
   if (req.body) {
@@ -211,14 +219,26 @@ app.get('/', (req, res) => {
 app.use('/', formRoutes);
 app.use('/', aboutRoutes);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Endpoint not found',
-    code: 'NOT_FOUND'
-  });
+// Catch all handler: send back React's index.html file for any non-API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/submit-form') || 
+      req.path.startsWith('/health') || 
+      req.path.startsWith('/status') || 
+      req.path.startsWith('/stats') ||
+      req.path.startsWith('/nafij')) {
+    return res.status(404).json({
+      success: false,
+      error: 'API endpoint not found',
+      code: 'NOT_FOUND'
+    });
+  }
+  
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
+
+// 404 handler
+// Remove this since we're handling it in the catch-all above
 
 // Global error handler
 app.use((err, req, res, next) => {
