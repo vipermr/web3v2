@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: express-form-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CLIENT_ID
+        sync: false
+      - key: CLIENT_SECRET
+        sync: false
+      - key: REFRESH_TOKEN
+        sync: false
+      - key: REDIRECT_URI
+        value: https://developers.google.com/oauthplayground
+      - key: TO_EMAIL
+        sync: false
+      - key: FRONTEND_DOMAIN
+        sync: false
