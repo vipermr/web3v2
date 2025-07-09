@@ -202,18 +202,8 @@ app.get('/status', (req, res) => {
 
 // Root endpoint - Simple welcome message
 app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Form Backend API is running',
-    status: 'online',
-    version: '1.0.0',
-    endpoints: {
-      status: '/status',
-      health: '/health',
-      submit: '/submit-form'
-    },
-    timestamp: new Date().toISOString()
-  });
+  // Serve the React frontend on root route
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 // API routes
@@ -222,12 +212,13 @@ app.use('/', aboutRoutes);
 
 // Catch all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
-  // Skip API routes
+  // Skip API routes - they should return JSON responses
   if (req.path.startsWith('/submit-form') || 
       req.path.startsWith('/health') || 
       req.path.startsWith('/status') || 
       req.path.startsWith('/stats') ||
-      req.path.startsWith('/nafij')) {
+      req.path.startsWith('/nafij') ||
+      req.path.startsWith('/api/')) {
     return res.status(404).json({
       success: false,
       error: 'API endpoint not found',
@@ -235,11 +226,9 @@ app.get('*', (req, res) => {
     });
   }
   
+  // For all other routes, serve the React app
   res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
-
-// 404 handler
-// Remove this since we're handling it in the catch-all above
 
 // Global error handler
 app.use((err, req, res, next) => {
