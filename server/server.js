@@ -144,6 +144,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Check if React build exists and serve static files
 const buildPath = path.join(__dirname, '..', 'dist');
 const indexPath = path.join(buildPath, 'index.html');
+const publicPath = path.join(__dirname, 'public');
+const homePath = path.join(publicPath, 'home.html');
 
 if (fs.existsSync(indexPath)) {
   // Serve static files from the React app build directory
@@ -155,6 +157,12 @@ if (fs.existsSync(indexPath)) {
 } else {
   logger.warn('React build not found - frontend routes will show fallback message');
 }
+
+// Serve static files from public directory
+app.use('/public', express.static(publicPath, {
+  maxAge: '1d',
+  etag: true
+}));
 
 // XSS protection middleware
 app.use((req, res, next) => {
@@ -289,7 +297,13 @@ const serveFrontend = (req, res) => {
 app.get('/', serveFrontend);
 
 // Home route - Duplicate of root route for guaranteed frontend access
-app.get('/home', serveFrontend);
+app.get('/home', (req, res) => {
+  if (fs.existsSync(homePath)) {
+    res.sendFile(homePath);
+  } else {
+    serveFrontend(req, res);
+  }
+});
 
 // Catch all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
