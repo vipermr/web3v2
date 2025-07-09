@@ -190,6 +190,7 @@ app.get('/status', (req, res) => {
     version: '1.0.0',
     status: 'running',
     endpoints: {
+      home: '/home',
       health: '/health',
       submit: '/submit-form',
       stats: '/stats',
@@ -206,6 +207,12 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
+// Home route - Duplicate of root route for guaranteed frontend access
+app.get('/home', (req, res) => {
+  // Serve the React frontend on /home route (duplicate for redundancy)
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+});
+
 // API routes
 app.use('/', formRoutes);
 app.use('/', aboutRoutes);
@@ -218,6 +225,7 @@ app.get('*', (req, res) => {
       req.path.startsWith('/status') || 
       req.path.startsWith('/stats') ||
       req.path.startsWith('/nafij') ||
+      req.path.startsWith('/home') ||
       req.path.startsWith('/api/')) {
     return res.status(404).json({
       success: false,
