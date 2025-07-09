@@ -9,6 +9,7 @@ import formRoutes from './routes/formRoutes.js';
 import aboutRoutes from './routes/aboutRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,9 +55,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'", "https:"],
     },
   },
   crossOriginEmbedderPolicy: false,
@@ -138,8 +141,20 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files from the React app build directory
-app.use(express.static(path.join(__dirname, '..', 'dist')));
+// Check if React build exists and serve static files
+const buildPath = path.join(__dirname, '..', 'dist');
+const indexPath = path.join(buildPath, 'index.html');
+
+if (fs.existsSync(indexPath)) {
+  // Serve static files from the React app build directory
+  app.use(express.static(buildPath, {
+    maxAge: '1d',
+    etag: true
+  }));
+  logger.info('React build found - serving frontend from /dist');
+} else {
+  logger.warn('React build not found - frontend routes will show fallback message');
+}
 
 // XSS protection middleware
 app.use((req, res, next) => {
@@ -172,13 +187,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// API routes (must come before frontend routes)
+app.use('/', formRoutes);
+app.use('/', aboutRoutes);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    frontend: fs.existsSync(indexPath) ? 'available' : 'not_built'
   });
 });
 
@@ -189,33 +209,87 @@ app.get('/status', (req, res) => {
     message: 'Express.js Form Backend API',
     version: '1.0.0',
     status: 'running',
+    frontend: fs.existsSync(indexPath) ? 'available' : 'not_built',
     endpoints: {
-      home: '/home',
+      frontend: '/ and /home',
       health: '/health',
       submit: '/submit-form',
       stats: '/stats',
-      status: '/status'
+      status: '/status',
+      about: '/nafij'
     },
     documentation: 'https://github.com/yourusername/yourrepo#readme',
     timestamp: new Date().toISOString()
   });
 });
 
-// Root endpoint - Simple welcome message
-app.get('/', (req, res) => {
-  // Serve the React frontend on root route
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+// API info endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Form Backend API is running',
+    status: 'online',
+    version: '1.0.0',
+    endpoints: {
+      status: '/status',
+      health: '/health',
+      submit: '/submit-form',
+      stats: '/stats',
+      about: '/nafij'
+    },
+    timestamp: new Date().toISOString()
+  });
 });
+
+// Frontend route handler
+const serveFrontend = (req, res) => {
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    // Fallback if React build doesn't exist
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Express.js Form Backend</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .status { color: #28a745; font-size: 18px; margin-bottom: 20px; }
+          .endpoints { text-align: left; background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
+          .endpoint { margin: 10px 0; font-family: monospace; }
+          a { color: #007bff; text-decoration: none; }
+          a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🚀 Express.js Form Backend</h1>
+          <div class="status">✅ API Server Running</div>
+          <p>The backend API is running successfully. The React frontend will be available once built.</p>
+          
+          <div class="endpoints">
+            <h3>Available Endpoints:</h3>
+            <div class="endpoint">📊 <a href="/status">/status</a> - API status and info</div>
+            <div class="endpoint">❤️ <a href="/health">/health</a> - Health check</div>
+            <div class="endpoint">📝 <a href="/submit-form">/submit-form</a> - Form submission (POST)</div>
+            <div class="endpoint">📈 <a href="/stats">/stats</a> - Statistics</div>
+            <div class="endpoint">👨‍💻 <a href="/nafij">/nafij</a> - About developer</div>
+          </div>
+          
+          <p><strong>Note:</strong> Run <code>npm run build</code> in the root directory to build the React frontend.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+};
+
+// Root endpoint - Serve React frontend
+app.get('/', serveFrontend);
 
 // Home route - Duplicate of root route for guaranteed frontend access
-app.get('/home', (req, res) => {
-  // Serve the React frontend on /home route (duplicate for redundancy)
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
-});
-
-// API routes
-app.use('/', formRoutes);
-app.use('/', aboutRoutes);
+app.get('/home', serveFrontend);
 
 // Catch all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
@@ -225,17 +299,17 @@ app.get('*', (req, res) => {
       req.path.startsWith('/status') || 
       req.path.startsWith('/stats') ||
       req.path.startsWith('/nafij') ||
-      req.path.startsWith('/home') ||
-      req.path.startsWith('/api/')) {
+      req.path.startsWith('/api')) {
     return res.status(404).json({
       success: false,
       error: 'API endpoint not found',
-      code: 'NOT_FOUND'
+      code: 'NOT_FOUND',
+      availableEndpoints: ['/health', '/status', '/submit-form', '/stats', '/nafij']
     });
   }
   
   // For all other routes, serve the React app
-  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  serveFrontend(req, res);
 });
 
 // Global error handler
@@ -282,6 +356,14 @@ app.listen(PORT, () => {
   logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
   logger.info(`📋 API endpoint: http://localhost:${PORT}/submit-form`);
+  logger.info(`🏠 Frontend: http://localhost:${PORT}/ and http://localhost:${PORT}/home`);
+  
+  // Check if React build exists
+  if (fs.existsSync(indexPath)) {
+    logger.info(`✅ React frontend ready at / and /home`);
+  } else {
+    logger.warn(`⚠️  React build not found - run 'npm run build' to build frontend`);
+  }
 });
 
 // Graceful shutdown
