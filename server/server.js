@@ -116,11 +116,12 @@ const corsOptions = {
       'http://127.0.0.1:3000',
       'http://127.0.0.1:10000',
       'https://web3pro.onrender.com',
-      'http://127.0.0.1:5173'
+      'http://127.0.0.1:5173',
+      'https://reliable-speculoos-5a84f6.netlify.app'
     ].filter(Boolean);
     
     // Check if origin is allowed
-    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+    if (allowedOrigins.includes(origin) || process.env.FRONTEND_DOMAIN === '*') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
