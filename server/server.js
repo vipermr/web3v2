@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import winston from 'winston';
 import formRoutes from './routes/formRoutes.js';
 import aboutRoutes from './routes/aboutRoutes.js';
+import gmailTestRoutes from './routes/gmailTestRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -198,6 +199,7 @@ app.use((req, res, next) => {
 // API routes (must come before frontend routes)
 app.use('/', formRoutes);
 app.use('/', aboutRoutes);
+app.use('/', gmailTestRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -105,6 +105,32 @@ function App() {
     }
   };
 
+  const testGmail = async () => {
+    try {
+      const apiUrl = `${getApiUrl()}/test-gmail`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data.success) {
+        setResponse({
+          success: true,
+          message: `Gmail API Test: ${data.message} - Email: ${data.data.emailAddress}`,
+        });
+      } else {
+        setResponse({
+          success: false,
+          error: `Gmail API Error: ${data.error}`,
+          hint: data.hint + ' Visit /gmail-setup for detailed instructions.',
+        });
+      }
+    } catch (error) {
+      setResponse({
+        success: false,
+        error: `Gmail test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">

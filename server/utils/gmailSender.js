@@ -121,21 +121,26 @@ export async function sendEmail(formData) {
     
     if (missingEnvVars.length > 0) {
       logger.error('Missing environment variables', { missingEnvVars });
-      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}. Please check your .env file.`);
+      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}. Please visit /gmail-setup for setup instructions.`);
     }
 
     // Get fresh access token
     try {
       const { credentials } = await oauth2Client.refreshAccessToken();
+      
+      if (!credentials.access_token) {
+        throw new Error('Failed to obtain access token from refresh token');
+      }
+      
       oauth2Client.setCredentials(credentials);
       logger.info('OAuth2 token refreshed successfully', { emailId });
     } catch (authError) {
       logger.error('OAuth2 authentication failed', { 
         emailId, 
         error: authError.message,
-        hint: 'Check CLIENT_ID, CLIENT_SECRET, and REFRESH_TOKEN in .env file'
+        hint: 'Your refresh token may have expired. Visit /gmail-setup to generate new credentials.'
       });
-      throw new Error(`Gmail authentication failed: ${authError.message}. Please verify your OAuth2 credentials.`);
+      throw new Error(`Gmail authentication failed: ${authError.message}. Please visit /gmail-setup to generate new credentials.`);
     }
 
 

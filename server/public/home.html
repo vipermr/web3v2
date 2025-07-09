@@ -311,8 +311,8 @@
                 <div class="test-buttons">
                     <button class="test-btn" onclick="testHealth()">❤️ Health Check</button>
                     <button class="test-btn" onclick="testStatus()">📊 API Status</button>
+                    <button class="test-btn" onclick="testGmail()">📧 Gmail Test</button>
                     <button class="test-btn" onclick="testStats()">📈 Statistics</button>
-                    <button class="test-btn" onclick="testAbout()">👨‍💻 About Dev</button>
                 </div>
                 
                 <div id="testResponse" class="response-area response-info" style="display: none;">
@@ -430,8 +430,8 @@
             testEndpoint('/stats');
         }
         
-        function testAbout() {
-            testEndpoint('/nafij');
+        function testGmail() {
+            testEndpoint('/test-gmail');
         }
         
         // Form submission
