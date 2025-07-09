@@ -9,6 +9,21 @@ This API allows you to submit forms from any website and receive emails via Gmai
 https://your-render-app.onrender.com
 ```
 
+### gmail setup
+```
+/test-gmail - Test your current Gmail credentials
+```
+
+### gmail setup
+```
+/gmail-auth-url - Generate OAuth2 authorization URL
+```
+
+### gmail setup
+```
+/gmail-setup - Complete setup instructions page
+```
+
 ### API Status
 ```bash
 GET /status
