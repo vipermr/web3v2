@@ -36,6 +36,7 @@ router.get('/oauth2callback', async (req, res) => {
         <style>
           body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #fee; }
           .error { color: #c00; background: #fdd; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: 500px; }
+          .btn { background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px; display: inline-block; }
         </style>
       </head>
       <body>
@@ -44,7 +45,9 @@ router.get('/oauth2callback', async (req, res) => {
           <strong>Error:</strong> ${error}<br>
           <strong>Description:</strong> ${req.query.error_description || 'Unknown error'}
         </div>
-        <p><a href="/gmail-setup">← Back to Setup</a></p>
+        <a href="/gmail-setup" class="btn">← Back to Setup</a>
+        <a href="/home" class="btn">🏠 Home</a>
+        <a href="/" class="btn">📊 Dashboard</a>
       </body>
       </html>
     `);
@@ -59,6 +62,7 @@ router.get('/oauth2callback', async (req, res) => {
         <style>
           body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #fee; }
           .error { color: #c00; background: #fdd; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: 500px; }
+          .btn { background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px; display: inline-block; }
         </style>
       </head>
       <body>
@@ -66,7 +70,9 @@ router.get('/oauth2callback', async (req, res) => {
         <div class="error">
           No authorization code received from Google.
         </div>
-        <p><a href="/gmail-setup">← Back to Setup</a></p>
+        <a href="/gmail-setup" class="btn">← Back to Setup</a>
+        <a href="/home" class="btn">🏠 Home</a>
+        <a href="/" class="btn">📊 Dashboard</a>
       </body>
       </html>
     `);
@@ -78,11 +84,12 @@ router.get('/oauth2callback', async (req, res) => {
       throw new Error('CLIENT_ID and CLIENT_SECRET must be configured first');
     }
 
-    // Create OAuth2 client
+    // Create OAuth2 client with correct redirect URI
+    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
-      `${req.protocol}://${req.get('host')}/oauth2callback`
+      redirectUri
     );
 
     logger.info('Exchanging authorization code for tokens...');
@@ -178,11 +185,22 @@ router.get('/oauth2callback', async (req, res) => {
             font-weight: 500; 
           }
           .btn:hover { background: #059669; }
+          .btn-blue { background: #3b82f6; }
+          .btn-blue:hover { background: #2563eb; }
+          .btn-purple { background: #8b5cf6; }
+          .btn-purple:hover { background: #7c3aed; }
           .copy-btn { 
             background: #3b82f6; 
             font-size: 12px; 
             padding: 4px 8px; 
             margin-left: 10px; 
+          }
+          .nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
           }
         </style>
       </head>
@@ -204,7 +222,7 @@ CLIENT_ID=${process.env.CLIENT_ID}
 CLIENT_SECRET=${process.env.CLIENT_SECRET}
 REFRESH_TOKEN=${tokens.refresh_token}
 TO_EMAIL=${profile.data.emailAddress}
-REDIRECT_URI=${req.protocol}://${req.get('host')}/oauth2callback
+REDIRECT_URI=${redirectUri}
           </div>
           
           <button class="btn copy-btn" onclick="copyCredentials()">📋 Copy to Clipboard</button>
@@ -228,10 +246,13 @@ REDIRECT_URI=${req.protocol}://${req.get('host')}/oauth2callback
             <li>Submit a form to test email sending</li>
           </ol>
 
-          <div style="text-align: center; margin-top: 30px;">
+          <div class="nav-buttons">
             <a href="/test-gmail" class="btn">🧪 Test Gmail API</a>
-            <a href="/" class="btn">🏠 Back to Home</a>
-            <a href="/credentials-status" class="btn">📋 Check Status</a>
+            <a href="/" class="btn btn-blue">📊 Dashboard</a>
+            <a href="/home" class="btn btn-blue">🏠 Home</a>
+            <a href="/credentials-status" class="btn btn-purple">📋 Check Status</a>
+            <a href="/gmail-setup" class="btn btn-purple">📚 Setup Guide</a>
+            <a href="/status" class="btn btn-purple">⚡ API Status</a>
           </div>
         </div>
 
@@ -261,6 +282,7 @@ REDIRECT_URI=${req.protocol}://${req.get('host')}/oauth2callback
           body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #fee; }
           .error { color: #c00; background: #fdd; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: 600px; }
           .details { background: #f5f5f5; padding: 15px; border-radius: 6px; margin: 15px 0; text-align: left; }
+          .btn { background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px; display: inline-block; }
         </style>
       </head>
       <body>
@@ -277,14 +299,16 @@ REDIRECT_URI=${req.protocol}://${req.get('host')}/oauth2callback
             </ul>
           </div>
         </div>
-        <p><a href="/gmail-setup">← Back to Setup</a></p>
+        <a href="/gmail-setup" class="btn">← Back to Setup</a>
+        <a href="/home" class="btn">🏠 Home</a>
+        <a href="/" class="btn">📊 Dashboard</a>
       </body>
       </html>
     `);
   }
 });
 
-// Generate authorization URL
+// Generate authorization URL with account selection
 router.get('/gmail-auth', (req, res) => {
   try {
     if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
@@ -295,10 +319,13 @@ router.get('/gmail-auth', (req, res) => {
       });
     }
 
+    // Use the correct redirect URI for the current host
+    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
+    
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
-      `${req.protocol}://${req.get('host')}/oauth2callback`
+      redirectUri
     );
 
     const scopes = [
@@ -309,11 +336,11 @@ router.get('/gmail-auth', (req, res) => {
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'consent',
+      prompt: 'select_account consent', // This forces account selection
       include_granted_scopes: true
     });
 
-    // Redirect to Google OAuth2
+    // Redirect to Google OAuth2 with account selection
     res.redirect(authUrl);
 
   } catch (error) {
@@ -323,6 +350,226 @@ router.get('/gmail-auth', (req, res) => {
       error: 'Failed to generate authorization URL',
       details: error.message
     });
+  }
+});
+
+// Alternative auth route with explicit account selection
+router.get('/gmail-auth-select', (req, res) => {
+  try {
+    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Gmail Authorization - Account Selection</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f9ff; }
+            .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            .error { color: #c00; background: #fdd; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .btn { background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px; display: inline-block; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>❌ Configuration Required</h1>
+            <div class="error">
+              CLIENT_ID and CLIENT_SECRET must be configured first in your environment variables.
+            </div>
+            <a href="/gmail-setup" class="btn">📚 Setup Instructions</a>
+            <a href="/home" class="btn">🏠 Home</a>
+            <a href="/" class="btn">📊 Dashboard</a>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+
+    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
+    
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.CLIENT_ID,
+      process.env.CLIENT_SECRET,
+      redirectUri
+    );
+
+    const scopes = [
+      'https://www.googleapis.com/auth/gmail.send',
+      'https://www.googleapis.com/auth/userinfo.email'
+    ];
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+      prompt: 'select_account consent',
+      include_granted_scopes: true
+    });
+
+    // Show account selection page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Gmail Authorization - Choose Account</title>
+        <style>
+          body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+          }
+          .container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            text-align: center;
+          }
+          .header {
+            margin-bottom: 30px;
+          }
+          .header h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+          }
+          .header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+          }
+          .auth-section {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            border: 2px solid #e2e8f0;
+          }
+          .auth-section h3 {
+            color: #374151;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+          }
+          .btn { 
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white; 
+            padding: 16px 32px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            margin: 10px; 
+            display: inline-block; 
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          }
+          .btn:hover { 
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+          }
+          .btn-secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+          }
+          .btn-secondary:hover {
+            background: linear-gradient(135deg, #4b5563, #374151);
+          }
+          .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #1e40af;
+          }
+          .nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+          }
+          .feature-list {
+            text-align: left;
+            margin: 20px 0;
+          }
+          .feature-list li {
+            margin: 8px 0;
+            color: #4b5563;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Gmail Authorization</h1>
+            <p>Choose your Gmail account to authorize email sending</p>
+          </div>
+
+          <div class="auth-section">
+            <h3>📧 Select Gmail Account</h3>
+            <p>You'll be redirected to Google to choose which Gmail account to use for sending emails.</p>
+            
+            <div class="info-box">
+              <strong>🔒 What happens next:</strong>
+              <ul class="feature-list">
+                <li>✅ Google will show all your Gmail accounts</li>
+                <li>✅ Choose the account you want to use for sending emails</li>
+                <li>✅ Grant permission to send emails via Gmail API</li>
+                <li>✅ Credentials will be automatically saved and managed</li>
+                <li>✅ Access tokens will auto-refresh when needed</li>
+              </ul>
+            </div>
+
+            <a href="${authUrl}" class="btn">
+              🚀 Choose Gmail Account & Authorize
+            </a>
+          </div>
+
+          <div class="nav-buttons">
+            <a href="/test-gmail" class="btn btn-secondary">🧪 Test Current Setup</a>
+            <a href="/gmail-setup" class="btn btn-secondary">📚 Setup Guide</a>
+            <a href="/" class="btn btn-secondary">📊 Dashboard</a>
+            <a href="/home" class="btn btn-secondary">🏠 Home</a>
+            <a href="/status" class="btn btn-secondary">⚡ API Status</a>
+            <a href="/credentials-status" class="btn btn-secondary">📋 Check Credentials</a>
+          </div>
+
+          <div class="info-box" style="margin-top: 30px;">
+            <strong>💡 Tip:</strong> If you have multiple Gmail accounts, Google will show them all and let you choose. 
+            You can always re-authorize with a different account later.
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+
+  } catch (error) {
+    logger.error('Failed to generate auth URL:', error);
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Authorization Error</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #fee; }
+          .error { color: #c00; background: #fdd; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: 600px; }
+          .btn { background: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px; display: inline-block; }
+        </style>
+      </head>
+      <body>
+        <h1>❌ Authorization Error</h1>
+        <div class="error">
+          <strong>Error:</strong> ${error.message}
+        </div>
+        <a href="/gmail-setup" class="btn">← Back to Setup</a>
+        <a href="/home" class="btn">🏠 Home</a>
+        <a href="/" class="btn">📊 Dashboard</a>
+      </body>
+      </html>
+    `);
   }
 });
 
@@ -345,10 +592,11 @@ router.post('/refresh-token', async (req, res) => {
       });
     }
 
+    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
     const oauth2Client = new google.auth.OAuth2(
       client_id,
       client_secret,
-      `${req.protocol}://${req.get('host')}/oauth2callback`
+      redirectUri
     );
 
     oauth2Client.setCredentials({

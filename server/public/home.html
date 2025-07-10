@@ -311,7 +311,7 @@
                 <div class="test-buttons">
                     <button class="test-btn" onclick="testHealth()">❤️ Health Check</button>
                     <button class="test-btn" onclick="testStatus()">📊 API Status</button>
-                    <button class="test-btn" onclick="authorizeGmail()">🔑 Authorize Gmail</button>
+                    <button class="test-btn" onclick="authorizeGmail()">🔑 Choose Gmail Account</button>
                     <button class="test-btn" onclick="testGmail()">📧 Gmail Test</button>
                     <button class="test-btn" onclick="checkCredentials()">📋 Check Credentials</button>
                     <button class="test-btn" onclick="testStats()">📈 Statistics</button>
@@ -437,7 +437,7 @@
         }
         
         function authorizeGmail() {
-            window.location.href = `${API_BASE}/gmail-auth`;
+            window.location.href = `${API_BASE}/gmail-auth-select`;
         }
         
         function checkCredentials() {
@@ -497,6 +497,21 @@
             setTimeout(() => {
                 testStatus();
             }, 1000);
+        });
+        
+        // Add navigation buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const navButtons = `
+                <div style="text-align: center; margin: 30px 0; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 12px;">
+                    <h3 style="color: white; margin-bottom: 15px;">🧭 Navigation</h3>
+                    <a href="/" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">📊 Dashboard</a>
+                    <a href="/home" style="background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">🏠 Home</a>
+                    <a href="/status" style="background: #8b5cf6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">⚡ API Status</a>
+                    <a href="/gmail-setup" style="background: #f59e0b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">📚 Gmail Setup</a>
+                    <a href="/nafij" style="background: #ef4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">👨‍💻 About Developer</a>
+                </div>
+            `;
+            document.querySelector('.container').insertAdjacentHTML('beforeend', navButtons);
         });
     </script>
 </body>

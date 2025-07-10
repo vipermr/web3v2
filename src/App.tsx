@@ -156,11 +156,11 @@ function App() {
               Test API Status
             </button>
             <button
-              onClick={() => window.open(`${getApiUrl()}/gmail-auth`, '_blank')}
+              onClick={() => window.open(`${getApiUrl()}/gmail-auth-select`, '_blank')}
               className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               <Mail className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-              Authorize Gmail
+              Choose Gmail Account
             </button>
             <button
               onClick={testGmail}
@@ -168,6 +168,13 @@ function App() {
             >
               <Mail className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
               Test Gmail API
+            </button>
+            <button
+              onClick={() => window.open(`${getApiUrl()}/home`, '_blank')}
+              className="group px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+            >
+              <Globe className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+              Live Demo
             </button>
             <div className="px-8 py-4 bg-white/80 backdrop-blur-sm rounded-xl text-sm text-blue-800 font-mono border border-blue-200 shadow-md flex items-center justify-center gap-2">
               <Globe className="w-4 h-4" />
@@ -433,11 +440,40 @@ function App() {
                 <p><strong>Root/Status:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/</code></p>
                 <p><strong>Health:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/health</code></p>
                 <p><strong>Endpoint:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/submit-form</code></p>
+                <p><strong>Live Demo:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/home</code></p>
+                <p><strong>Gmail Setup:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/gmail-setup</code></p>
                 <p><strong>Method:</strong> POST</p>
                 <p><strong>Content-Type:</strong> application/json</p>
                 <p><strong>Required fields:</strong> name, email, subject, message</p>
                 <p><strong>Optional fields:</strong> phone, company, template_id</p>
                 <p><strong>⚠️ Note:</strong> Gmail API must be configured for email sending to work</p>
+              </div>
+              
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => window.open(`${getApiUrl()}/home`, '_blank')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                >
+                  🏠 Live Demo
+                </button>
+                <button
+                  onClick={() => window.open(`${getApiUrl()}/gmail-setup`, '_blank')}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                >
+                  📚 Gmail Setup
+                </button>
+                <button
+                  onClick={() => window.open(`${getApiUrl()}/status`, '_blank')}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                >
+                  ⚡ API Status
+                </button>
+                <button
+                  onClick={() => window.open(`${getApiUrl()}/nafij`, '_blank')}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                >
+                  👨‍💻 About Developer
+                </button>
               </div>
             </div>
           </div>

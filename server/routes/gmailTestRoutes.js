@@ -177,12 +177,15 @@ REDIRECT_URI=https://developers.google.com/oauthplayground
             <a href="https://developers.google.com/oauthplayground" class="btn" target="_blank">
                 🔑 OAuth2 Playground
             </a>
-            <a href="/gmail-auth" class="btn btn-success">
-                🔑 Authorize with Google
+            <a href="/gmail-auth-select" class="btn btn-success">
+                🔑 Choose Gmail Account
             </a>
             <a href="/test-gmail" class="btn btn-success">
                 🧪 Test Credentials
             </a>
+            <a href="/" class="btn">📊 Dashboard</a>
+            <a href="/home" class="btn">🏠 Home</a>
+            <a href="/status" class="btn">⚡ API Status</a>
         </div>
         
         <div class="success">
