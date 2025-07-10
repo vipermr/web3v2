@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import handlebars from 'handlebars';
@@ -29,16 +29,25 @@ let gmail = null;
 let lastTokenRefresh = 0;
 const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000; // 50 minutes
 
+// Get the correct redirect URI based on environment
+function getRedirectUri() {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://web3prov2.onrender.com/oauth2callback';
+  }
+  return 'http://localhost:3000/oauth2callback';
+}
+
 // Initialize OAuth2 client
 function initializeOAuth2Client() {
   if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
     throw new Error('CLIENT_ID and CLIENT_SECRET must be configured');
   }
 
+  const redirectUri = getRedirectUri();
   oauth2Client = new google.auth.OAuth2(
     process.env.CLIENT_ID,
     process.env.CLIENT_SECRET,
-    process.env.REDIRECT_URI || 'https://developers.google.com/oauthplayground'
+    redirectUri
   );
 
   if (process.env.REFRESH_TOKEN) {
@@ -48,7 +57,7 @@ function initializeOAuth2Client() {
   }
 
   gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-  logger.info('OAuth2 client initialized successfully');
+  logger.info(`OAuth2 client initialized successfully with redirect URI: ${redirectUri}`);
 }
 
 // Auto-refresh access token if needed
@@ -63,6 +72,11 @@ async function ensureValidAccessToken() {
   // If we don't have a refresh token, try to load from stored credentials
   if (!process.env.REFRESH_TOKEN) {
     await loadStoredCredentials();
+  }
+
+  // Check if we still don't have a refresh token
+  if (!oauth2Client.credentials.refresh_token && !process.env.REFRESH_TOKEN) {
+    throw new Error('No refresh token available. Please visit /gmail-auth-select to authorize.');
   }
 
   // Check if token needs refresh (every 50 minutes or if no access token)
@@ -94,7 +108,7 @@ async function ensureValidAccessToken() {
         return storedToken;
       }
       
-      throw new Error(`Token refresh failed: ${error.message}. Please re-authorize at /gmail-auth`);
+      throw new Error(`Token refresh failed: ${error.message}. Please re-authorize at /gmail-auth-select`);
     }
   }
 
@@ -110,6 +124,10 @@ async function loadStoredCredentials() {
     
     if (credentials.refresh_token) {
       logger.info('Loading stored credentials from temp file');
+      
+      // Update environment variables in memory
+      process.env.REFRESH_TOKEN = credentials.refresh_token;
+      process.env.TO_EMAIL = credentials.email_address;
       
       oauth2Client.setCredentials({
         refresh_token: credentials.refresh_token,
@@ -136,19 +154,19 @@ function loadTemplate(templateId) {
   try {
     const templatePath = path.join(__dirname, '..', 'templates', `${templateId}.html`);
     
-    if (!fs.existsSync(templatePath)) {
+    if (!await fs.access(templatePath).then(() => true).catch(() => false)) {
       logger.warn(`Template not found: ${templateId}, falling back to default`);
       const defaultPath = path.join(__dirname, '..', 'templates', 'default.html');
       
-      if (!fs.existsSync(defaultPath)) {
+      if (!await fs.access(defaultPath).then(() => true).catch(() => false)) {
         throw new Error('Default template not found');
       }
       
-      const defaultTemplate = fs.readFileSync(defaultPath, 'utf-8');
+      const defaultTemplate = await fs.readFile(defaultPath, 'utf-8');
       return handlebars.compile(defaultTemplate);
     }
     
-    const template = fs.readFileSync(templatePath, 'utf-8');
+    const template = await fs.readFile(templatePath, 'utf-8');
     return handlebars.compile(template);
   } catch (error) {
     logger.error('Template loading error', { templateId, error: error.message });
@@ -209,13 +227,23 @@ export async function sendEmail(formData) {
       to: process.env.TO_EMAIL
     });
 
-    // Validate required environment variables (REFRESH_TOKEN is optional if we have stored credentials)
-    const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'TO_EMAIL'];
+    // Validate required environment variables
+    const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET'];
     const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
     
     if (missingEnvVars.length > 0) {
       logger.error('Missing environment variables', { missingEnvVars });
-      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}. Please visit /gmail-auth for setup.`);
+      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}. Please visit /gmail-auth-select for setup.`);
+    }
+
+    // Check if we have TO_EMAIL
+    if (!process.env.TO_EMAIL) {
+      // Try to load from stored credentials
+      await loadStoredCredentials();
+      
+      if (!process.env.TO_EMAIL) {
+        throw new Error('TO_EMAIL not configured. Please visit /gmail-auth-select to authorize and set up email destination.');
+      }
     }
 
     // Ensure we have a valid access token (auto-refresh if needed)
@@ -229,11 +257,10 @@ export async function sendEmail(formData) {
       logger.error('OAuth2 authentication failed', { 
         emailId, 
         error: authError.message,
-        hint: 'Your credentials may have expired. Visit /gmail-auth to re-authorize.'
+        hint: 'Your credentials may have expired. Visit /gmail-auth-select to re-authorize.'
       });
-      throw new Error(`Gmail authentication failed: ${authError.message}. Please visit /gmail-auth to re-authorize.`);
+      throw new Error(`Gmail authentication failed: ${authError.message}. Please visit /gmail-auth-select to re-authorize.`);
     }
-
 
     // Prepare template data
     const templateData = {
@@ -250,7 +277,7 @@ export async function sendEmail(formData) {
     // Load and compile template
     let htmlContent, textContent;
     try {
-      const template = loadTemplate(formData.template_id);
+      const template = await loadTemplate(formData.template_id);
       htmlContent = template(templateData);
       textContent = htmlToText(htmlContent);
       logger.info('Email template processed successfully', { emailId, template: formData.template_id });

@@ -12,7 +12,6 @@ http://localhost:10000
 ### 1.2 Authorized Redirect URIs
 ```
 https://web3prov2.onrender.com/oauth2callback
-https://developers.google.com/oauthplayground
 http://localhost:3000/oauth2callback
 http://localhost:10000/oauth2callback
 ```
@@ -24,8 +23,6 @@ Set these in your Render dashboard:
 ```env
 CLIENT_ID=your_google_client_id_here
 CLIENT_SECRET=your_google_client_secret_here
-REDIRECT_URI=https://web3prov2.onrender.com/oauth2callback
-# REDIRECT_URI will be auto-detected, but you can set it explicitly
 TO_EMAIL=nafijrahaman19721@gmail.com
 FRONTEND_DOMAIN=*
 PORT=10000
@@ -41,8 +38,8 @@ ENABLE_STRICT_CORS=false
 2. Restart your Render service
 3. Visit: `https://web3prov2.onrender.com/gmail-auth-select`
 4. **Choose your Gmail account** from the list Google shows you
-4. Complete Google authorization
-5. System automatically handles credentials
+5. Complete Google authorization
+6. System automatically handles credentials
 
 ### Option B: Manual (OAuth2 Playground)
 1. Go to https://developers.google.com/oauthplayground
@@ -82,3 +79,25 @@ ENABLE_STRICT_CORS=false
 - **Gmail Setup**: `https://web3prov2.onrender.com/gmail-setup`
 - **Choose Account**: `https://web3prov2.onrender.com/gmail-auth-select`
 - **API Status**: `https://web3prov2.onrender.com/status`
+
+## Fixed Issues
+
+### ✅ Redirect URI Mismatch
+- Fixed hardcoded redirect URIs to use environment-based detection
+- Production: `https://web3prov2.onrender.com/oauth2callback`
+- Development: `http://localhost:3000/oauth2callback`
+
+### ✅ Invalid Grant Error
+- Improved token refresh logic
+- Added automatic credential loading from stored files
+- Better error handling for expired tokens
+
+### ✅ Account Selection
+- Enhanced `/gmail-auth-select` route for better account selection
+- Added proper consent flow with `prompt=select_account consent`
+- Improved error messages and troubleshooting
+
+### ✅ Automatic Setup
+- Credentials are now automatically loaded into memory after authorization
+- No server restart required after OAuth2 completion
+- Immediate email sending capability after authorization

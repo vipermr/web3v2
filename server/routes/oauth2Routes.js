@@ -22,6 +22,19 @@ const logger = winston.createLogger({
   ],
 });
 
+// Get the correct redirect URI based on environment
+function getRedirectUri(req) {
+  // For production (Render), use the production URL
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://web3prov2.onrender.com/oauth2callback';
+  }
+  
+  // For development, use localhost
+  const protocol = req.protocol;
+  const host = req.get('host');
+  return `${protocol}://${host}/oauth2callback`;
+}
+
 // OAuth2 callback handler
 router.get('/oauth2callback', async (req, res) => {
   const { code, error, state } = req.query;
@@ -84,8 +97,10 @@ router.get('/oauth2callback', async (req, res) => {
       throw new Error('CLIENT_ID and CLIENT_SECRET must be configured first');
     }
 
-    // Create OAuth2 client with correct redirect URI
-    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
+    // Use the correct redirect URI
+    const redirectUri = getRedirectUri(req);
+    logger.info(`Using redirect URI: ${redirectUri}`);
+    
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
@@ -110,19 +125,25 @@ router.get('/oauth2callback', async (req, res) => {
 
     logger.info(`✅ Gmail API test successful for: ${profile.data.emailAddress}`);
 
-    // Save credentials to a temporary file (in production, you'd save to database)
+    // Save credentials to environment variables file for automatic loading
     const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
-    await fs.writeFile(credentialsPath, JSON.stringify({
+    const credentialsData = {
       client_id: process.env.CLIENT_ID,
       client_secret: process.env.CLIENT_SECRET,
       refresh_token: tokens.refresh_token,
       access_token: tokens.access_token,
       expiry_date: tokens.expiry_date,
       email_address: profile.data.emailAddress,
-      created_at: new Date().toISOString()
-    }, null, 2));
-
+      created_at: new Date().toISOString(),
+      redirect_uri: redirectUri
+    };
+    
+    await fs.writeFile(credentialsPath, JSON.stringify(credentialsData, null, 2));
     logger.info('✅ Credentials saved to temp file for automatic loading');
+
+    // Also update environment variables in memory
+    process.env.REFRESH_TOKEN = tokens.refresh_token;
+    process.env.TO_EMAIL = profile.data.emailAddress;
 
     // Return success page with credentials
     res.send(`
@@ -209,13 +230,14 @@ router.get('/oauth2callback', async (req, res) => {
           <h1>✅ OAuth2 Authorization Successful!</h1>
           
           <div class="success">
-            <strong>🎉 Success!</strong> Your Gmail API credentials have been generated successfully.<br>
+            <strong>🎉 Success!</strong> Your Gmail API credentials have been generated and saved successfully.<br>
             <strong>Email:</strong> ${profile.data.emailAddress}<br>
-            <strong>Status:</strong> Ready to send emails
+            <strong>Status:</strong> Ready to send emails<br>
+            <strong>Auto-loaded:</strong> Credentials are now active in the system
           </div>
 
-          <h3>📋 Environment Variables</h3>
-          <p>Copy these values to your <code>.env</code> file or Render environment variables:</p>
+          <h3>📋 Environment Variables (For Manual Setup)</h3>
+          <p>These values have been automatically loaded, but you can also add them to your .env file:</p>
           
           <div class="credentials" id="credentials">
 CLIENT_ID=${process.env.CLIENT_ID}
@@ -228,22 +250,20 @@ REDIRECT_URI=${redirectUri}
           <button class="btn copy-btn" onclick="copyCredentials()">📋 Copy to Clipboard</button>
           
           <div class="warning">
-            <strong>⚠️ Important:</strong>
+            <strong>✅ Automatic Setup Complete:</strong>
             <ul>
-              <li>Save these credentials securely</li>
-              <li><strong>Option 1:</strong> Add them to your Render environment variables and restart</li>
-              <li><strong>Option 2:</strong> The system will automatically use stored credentials</li>
-              <li>Never share these credentials publicly</li>
-              <li>Credentials are automatically refreshed when they expire</li>
+              <li>✅ Credentials have been automatically loaded into the system</li>
+              <li>✅ Gmail API is now ready to send emails</li>
+              <li>✅ No server restart required</li>
+              <li>✅ Form submissions will now work immediately</li>
             </ul>
           </div>
 
           <h3>🚀 Next Steps</h3>
           <ol>
-            <li><strong>Automatic (Recommended):</strong> The system will use stored credentials automatically</li>
-            <li><strong>Manual:</strong> Copy environment variables to Render dashboard and restart</li>
-            <li>Test the Gmail API to confirm everything works</li>
-            <li>Submit a form to test email sending</li>
+            <li><strong>✅ Done:</strong> Credentials are automatically active</li>
+            <li><strong>Test:</strong> Try submitting a form to test email sending</li>
+            <li><strong>Optional:</strong> Add credentials to .env file for persistence</li>
           </ol>
 
           <div class="nav-buttons">
@@ -294,8 +314,9 @@ REDIRECT_URI=${redirectUri}
             <ul>
               <li>Make sure CLIENT_ID and CLIENT_SECRET are set correctly</li>
               <li>Ensure the authorization code hasn't expired (use it immediately)</li>
-              <li>Check that the redirect URI matches exactly</li>
+              <li>Check that the redirect URI matches exactly in Google Cloud Console</li>
               <li>Try generating a new authorization code</li>
+              <li>Make sure you're using the correct Google account</li>
             </ul>
           </div>
         </div>
@@ -319,8 +340,9 @@ router.get('/gmail-auth', (req, res) => {
       });
     }
 
-    // Use the correct redirect URI for the current host
-    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
+    // Use the correct redirect URI
+    const redirectUri = getRedirectUri(req);
+    logger.info(`Generating auth URL with redirect URI: ${redirectUri}`);
     
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
@@ -336,7 +358,7 @@ router.get('/gmail-auth', (req, res) => {
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'select_account consent', // This forces account selection
+      prompt: 'select_account consent', // This forces account selection and consent
       include_granted_scopes: true
     });
 
@@ -384,7 +406,8 @@ router.get('/gmail-auth-select', (req, res) => {
       `);
     }
 
-    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
+    const redirectUri = getRedirectUri(req);
+    logger.info(`Account selection page - redirect URI: ${redirectUri}`);
     
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
@@ -499,6 +522,15 @@ router.get('/gmail-auth-select', (req, res) => {
             margin: 8px 0;
             color: #4b5563;
           }
+          .redirect-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #065f46;
+            font-size: 0.9rem;
+          }
         </style>
       </head>
       <body>
@@ -506,6 +538,12 @@ router.get('/gmail-auth-select', (req, res) => {
           <div class="header">
             <h1>🔐 Gmail Authorization</h1>
             <p>Choose your Gmail account to authorize email sending</p>
+          </div>
+
+          <div class="redirect-info">
+            <strong>🔧 Configuration:</strong><br>
+            <strong>Redirect URI:</strong> ${redirectUri}<br>
+            <strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}
           </div>
 
           <div class="auth-section">
@@ -592,7 +630,7 @@ router.post('/refresh-token', async (req, res) => {
       });
     }
 
-    const redirectUri = `${req.protocol}://${req.get('host')}/oauth2callback`;
+    const redirectUri = getRedirectUri(req);
     const oauth2Client = new google.auth.OAuth2(
       client_id,
       client_secret,
@@ -648,13 +686,18 @@ router.get('/credentials-status', async (req, res) => {
         created_at: credentials.created_at,
         has_refresh_token: !!credentials.refresh_token,
         has_access_token: !!credentials.access_token,
-        expires_at: credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : null
+        expires_at: credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : null,
+        redirect_uri: credentials.redirect_uri,
+        environment_refresh_token: !!process.env.REFRESH_TOKEN,
+        environment_to_email: process.env.TO_EMAIL
       });
     } catch (fileError) {
       res.json({
         success: false,
         status: 'no_credentials',
-        message: 'No stored credentials found. Please visit /gmail-auth to authorize.'
+        message: 'No stored credentials found. Please visit /gmail-auth-select to authorize.',
+        environment_refresh_token: !!process.env.REFRESH_TOKEN,
+        environment_to_email: process.env.TO_EMAIL
       });
     }
   } catch (error) {
