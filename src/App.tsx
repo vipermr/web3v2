@@ -155,6 +155,13 @@ function App() {
               <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
               Test API Status
             </button>
+            <button
+              onClick={() => window.open(`${getApiUrl()}/gmail-auth`, '_blank')}
+              className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+            >
+              <Mail className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
+              Authorize Gmail
+            </button>
             <div className="px-8 py-4 bg-white/80 backdrop-blur-sm rounded-xl text-sm text-blue-800 font-mono border border-blue-200 shadow-md flex items-center justify-center gap-2">
               <Globe className="w-4 h-4" />
               Live API: {getApiUrl()}

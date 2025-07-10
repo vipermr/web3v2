@@ -177,6 +177,9 @@ REDIRECT_URI=https://developers.google.com/oauthplayground
             <a href="https://developers.google.com/oauthplayground" class="btn" target="_blank">
                 🔑 OAuth2 Playground
             </a>
+            <a href="/gmail-auth" class="btn btn-success">
+                🔑 Authorize with Google
+            </a>
             <a href="/test-gmail" class="btn btn-success">
                 🧪 Test Credentials
             </a>
@@ -188,7 +191,26 @@ REDIRECT_URI=https://developers.google.com/oauthplayground
                 <li>Update your .env file with the new credentials</li>
                 <li>Restart your server</li>
                 <li>Visit <a href="/test-gmail">/test-gmail</a> to verify the setup</li>
-                <li>Try submitting a form to test email sending</li>
+                <li>Option A: Use OAuth2 Playground (Manual)</li>
+                <ul>
+                    <li>Go to https://developers.google.com/oauthplayground</li>
+                    <li>Click the settings gear icon (⚙️) in the top right</li>
+                    <li>Check 'Use your own OAuth credentials'</li>
+                    <li>Enter your CLIENT_ID and CLIENT_SECRET</li>
+                    <li>In the left panel, find 'Gmail API v1'</li>
+                    <li>Select 'https://www.googleapis.com/auth/gmail.send'</li>
+                    <li>Click 'Authorize APIs'</li>
+                    <li>Sign in with your Gmail account</li>
+                    <li>Click 'Exchange authorization code for tokens'</li>
+                    <li>Copy the 'Refresh token' value</li>
+                </ul>
+                <li><strong>Option B: Use Our Backend (Automatic)</strong></li>
+                <ul>
+                    <li>Set your CLIENT_ID and CLIENT_SECRET in environment variables</li>
+                    <li>Click the "🔑 Authorize with Google" button below</li>
+                    <li>Complete the Google authorization flow</li>
+                    <li>Copy the generated credentials automatically</li>
+                </ul>
             </ol>
         </div>
     </div>

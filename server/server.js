@@ -8,6 +8,7 @@ import winston from 'winston';
 import formRoutes from './routes/formRoutes.js';
 import aboutRoutes from './routes/aboutRoutes.js';
 import gmailTestRoutes from './routes/gmailTestRoutes.js';
+import oauth2Routes from './routes/oauth2Routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -200,6 +201,7 @@ app.use((req, res, next) => {
 app.use('/', formRoutes);
 app.use('/', aboutRoutes);
 app.use('/', gmailTestRoutes);
+app.use('/', oauth2Routes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
