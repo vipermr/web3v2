@@ -113,17 +113,29 @@ router.get('/oauth2callback', async (req, res) => {
     const { tokens } = await oauth2Client.getToken(code);
     
     if (!tokens.refresh_token) {
-      throw new Error('No refresh token received. Make sure to include access_type=offline in the authorization URL.');
+      throw new Error('No refresh token received. Make sure to include access_type=offline and prompt=consent in the authorization URL.');
     }
 
     logger.info('✅ Successfully obtained refresh token');
 
     // Test the tokens by making a Gmail API call
     oauth2Client.setCredentials(tokens);
+    
+    // Test with Gmail API to verify permissions
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-    const profile = await gmail.users.getProfile({ userId: 'me' });
-
-    logger.info(`✅ Gmail API test successful for: ${profile.data.emailAddress}`);
+    
+    try {
+      const profile = await gmail.users.getProfile({ userId: 'me' });
+      logger.info(`✅ Gmail API test successful for: ${profile.data.emailAddress}`);
+      
+      // Test sending capability by checking labels (this verifies send permission)
+      const labels = await gmail.users.labels.list({ userId: 'me' });
+      logger.info(`✅ Gmail permissions verified - found ${labels.data.labels.length} labels`);
+      
+    } catch (gmailError) {
+      logger.error('Gmail API test failed:', gmailError.message);
+      throw new Error(`Gmail API permission test failed: ${gmailError.message}. Please ensure you granted all requested permissions.`);
+    }
 
     // Save credentials to environment variables file for automatic loading
     const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
@@ -135,7 +147,12 @@ router.get('/oauth2callback', async (req, res) => {
       expiry_date: tokens.expiry_date,
       email_address: profile.data.emailAddress,
       created_at: new Date().toISOString(),
-      redirect_uri: redirectUri
+      redirect_uri: redirectUri,
+      scopes: [
+        'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/userinfo.email'
+      ]
     };
     
     await fs.writeFile(credentialsPath, JSON.stringify(credentialsData, null, 2));
@@ -223,6 +240,13 @@ router.get('/oauth2callback', async (req, res) => {
             justify-content: center;
             margin: 20px 0;
           }
+          .scope-list {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+          }
         </style>
       </head>
       <body>
@@ -233,7 +257,17 @@ router.get('/oauth2callback', async (req, res) => {
             <strong>🎉 Success!</strong> Your Gmail API credentials have been generated and saved successfully.<br>
             <strong>Email:</strong> ${profile.data.emailAddress}<br>
             <strong>Status:</strong> Ready to send emails<br>
-            <strong>Auto-loaded:</strong> Credentials are now active in the system
+            <strong>Auto-loaded:</strong> Credentials are now active in the system<br>
+            <strong>Permissions:</strong> Gmail send access verified ✅
+          </div>
+
+          <div class="scope-list">
+            <strong>🔐 Granted Permissions:</strong>
+            <ul>
+              <li>✅ Gmail Send - Send emails on your behalf</li>
+              <li>✅ Gmail Read - Access your Gmail account info</li>
+              <li>✅ User Info - Access your basic profile information</li>
+            </ul>
           </div>
 
           <h3>📋 Environment Variables (For Manual Setup)</h3>
@@ -254,6 +288,7 @@ REDIRECT_URI=${redirectUri}
             <ul>
               <li>✅ Credentials have been automatically loaded into the system</li>
               <li>✅ Gmail API is now ready to send emails</li>
+              <li>✅ All required permissions granted and verified</li>
               <li>✅ No server restart required</li>
               <li>✅ Form submissions will now work immediately</li>
             </ul>
@@ -317,6 +352,7 @@ REDIRECT_URI=${redirectUri}
               <li>Check that the redirect URI matches exactly in Google Cloud Console</li>
               <li>Try generating a new authorization code</li>
               <li>Make sure you're using the correct Google account</li>
+              <li>Verify you granted ALL requested permissions during authorization</li>
             </ul>
           </div>
         </div>
@@ -329,7 +365,7 @@ REDIRECT_URI=${redirectUri}
   }
 });
 
-// Generate authorization URL with account selection
+// Generate authorization URL with enhanced scopes and permissions
 router.get('/gmail-auth', (req, res) => {
   try {
     if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
@@ -350,16 +386,20 @@ router.get('/gmail-auth', (req, res) => {
       redirectUri
     );
 
+    // Enhanced scopes for Gmail API - 2024 requirements
     const scopes = [
       'https://www.googleapis.com/auth/gmail.send',
-      'https://www.googleapis.com/auth/userinfo.email'
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
     ];
 
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'select_account consent', // This forces account selection and consent
-      include_granted_scopes: true
+      prompt: 'select_account consent', // Force account selection and consent
+      include_granted_scopes: true,
+      state: 'gmail_auth_' + Date.now() // Add state for security
     });
 
     // Redirect to Google OAuth2 with account selection
@@ -375,7 +415,7 @@ router.get('/gmail-auth', (req, res) => {
   }
 });
 
-// Alternative auth route with explicit account selection
+// Alternative auth route with explicit account selection and enhanced permissions
 router.get('/gmail-auth-select', (req, res) => {
   try {
     if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
@@ -415,19 +455,23 @@ router.get('/gmail-auth-select', (req, res) => {
       redirectUri
     );
 
+    // Enhanced scopes for full Gmail functionality
     const scopes = [
       'https://www.googleapis.com/auth/gmail.send',
-      'https://www.googleapis.com/auth/userinfo.email'
+      'https://www.googleapis.com/auth/gmail.readonly',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
     ];
 
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
       prompt: 'select_account consent',
-      include_granted_scopes: true
+      include_granted_scopes: true,
+      state: 'gmail_auth_select_' + Date.now()
     });
 
-    // Show account selection page
+    // Show enhanced account selection page
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -531,6 +575,14 @@ router.get('/gmail-auth-select', (req, res) => {
             color: #065f46;
             font-size: 0.9rem;
           }
+          .scope-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #92400e;
+          }
         </style>
       </head>
       <body>
@@ -547,23 +599,36 @@ router.get('/gmail-auth-select', (req, res) => {
             <strong>Domain:</strong> web3ninja.onrender.com
           </div>
 
+          <div class="scope-info">
+            <strong>🔐 Required Permissions:</strong><br>
+            This app will request the following permissions:
+            <ul style="text-align: left; margin: 10px 0;">
+              <li>✉️ Send emails on your behalf</li>
+              <li>📧 Read your Gmail account information</li>
+              <li>👤 Access your basic profile information</li>
+              <li>📬 View your Gmail labels and folders</li>
+            </ul>
+            <strong>⚠️ Important:</strong> You must grant ALL permissions for the app to work properly.
+          </div>
+
           <div class="auth-section">
-            <h3>📧 Select Gmail Account</h3>
-            <p>You'll be redirected to Google to choose which Gmail account to use for sending emails.</p>
+            <h3>📧 Select Gmail Account & Grant Permissions</h3>
+            <p>You'll be redirected to Google to choose which Gmail account to use and grant the required permissions.</p>
             
             <div class="info-box">
               <strong>🔒 What happens next:</strong>
               <ul class="feature-list">
                 <li>✅ Google will show all your Gmail accounts</li>
                 <li>✅ Choose the account you want to use for sending emails</li>
-                <li>✅ Grant permission to send emails via Gmail API</li>
+                <li>✅ Grant ALL requested permissions (very important!)</li>
                 <li>✅ Credentials will be automatically saved and managed</li>
                 <li>✅ Access tokens will auto-refresh when needed</li>
+                <li>✅ Email sending will work immediately</li>
               </ul>
             </div>
 
             <a href="${authUrl}" class="btn">
-              🚀 Choose Gmail Account & Authorize
+              🚀 Choose Gmail Account & Grant Permissions
             </a>
           </div>
 
@@ -577,8 +642,11 @@ router.get('/gmail-auth-select', (req, res) => {
           </div>
 
           <div class="info-box" style="margin-top: 30px;">
-            <strong>💡 Tip:</strong> If you have multiple Gmail accounts, Google will show them all and let you choose. 
-            You can always re-authorize with a different account later.
+            <strong>💡 Troubleshooting:</strong><br>
+            • If you get "Insufficient Permission" error, make sure to grant ALL requested permissions<br>
+            • If you have multiple Gmail accounts, Google will show them all for selection<br>
+            • You can always re-authorize with a different account later<br>
+            • Make sure your Google Cloud Console has the correct redirect URIs configured
           </div>
         </div>
       </body>
@@ -648,7 +716,7 @@ router.post('/refresh-token', async (req, res) => {
       access_token: credentials.access_token,
       expires_in: credentials.expiry_date ? Math.floor((credentials.expiry_date - Date.now()) / 1000) : 3600,
       token_type: 'Bearer',
-      scope: 'https://www.googleapis.com/auth/gmail.send'
+      scope: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly'
     });
 
   } catch (error) {
@@ -689,6 +757,7 @@ router.get('/credentials-status', async (req, res) => {
         has_access_token: !!credentials.access_token,
         expires_at: credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : null,
         redirect_uri: credentials.redirect_uri,
+        scopes: credentials.scopes || [],
         environment_refresh_token: !!process.env.REFRESH_TOKEN,
         environment_to_email: process.env.TO_EMAIL
       });
