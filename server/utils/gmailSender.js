@@ -32,7 +32,7 @@ const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000; // 50 minutes
 // Get the correct redirect URI based on environment
 function getRedirectUri() {
   if (process.env.NODE_ENV === 'production') {
-    return 'https://web3prov2.onrender.com/oauth2callback';
+    return 'https://web3ninja.onrender.com/oauth2callback';
   }
   return 'http://localhost:3000/oauth2callback';
 }
@@ -149,16 +149,28 @@ async function loadStoredCredentials() {
   return null;
 }
 
+// Helper function to check if file exists
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Helper function to load and compile templates
-function loadTemplate(templateId) {
+async function loadTemplate(templateId) {
   try {
     const templatePath = path.join(__dirname, '..', 'templates', `${templateId}.html`);
     
-    if (!await fs.access(templatePath).then(() => true).catch(() => false)) {
+    const templateExists = await fileExists(templatePath);
+    if (!templateExists) {
       logger.warn(`Template not found: ${templateId}, falling back to default`);
       const defaultPath = path.join(__dirname, '..', 'templates', 'default.html');
       
-      if (!await fs.access(defaultPath).then(() => true).catch(() => false)) {
+      const defaultExists = await fileExists(defaultPath);
+      if (!defaultExists) {
         throw new Error('Default template not found');
       }
       

@@ -26,7 +26,7 @@ const logger = winston.createLogger({
 function getRedirectUri(req) {
   // For production (Render), use the production URL
   if (process.env.NODE_ENV === 'production') {
-    return 'https://web3prov2.onrender.com/oauth2callback';
+    return 'https://web3ninja.onrender.com/oauth2callback';
   }
   
   // For development, use localhost
@@ -543,7 +543,8 @@ router.get('/gmail-auth-select', (req, res) => {
           <div class="redirect-info">
             <strong>🔧 Configuration:</strong><br>
             <strong>Redirect URI:</strong> ${redirectUri}<br>
-            <strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}
+            <strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}<br>
+            <strong>Domain:</strong> web3ninja.onrender.com
           </div>
 
           <div class="auth-section">

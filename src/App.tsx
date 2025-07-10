@@ -38,8 +38,8 @@ function App() {
 
   // Get the current WebContainer API URL
   const getApiUrl = () => {
-    // Use the live Render API URL - this will serve both frontend and backend
-    return 'https://web3prov2.onrender.com';
+    // Use the new Render API URL - this will serve both frontend and backend
+    return 'https://web3ninja.onrender.com';
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
