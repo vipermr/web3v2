@@ -20,23 +20,47 @@ export async function testGmailCredentials() {
   try {
     logger.info('Testing Gmail API credentials...');
     
-    // Check required environment variables
-    const requiredVars = ['CLIENT_ID', 'CLIENT_SECRET', 'REFRESH_TOKEN'];
+    // Check required environment variables (REFRESH_TOKEN is optional if we have stored credentials)
+    const requiredVars = ['CLIENT_ID', 'CLIENT_SECRET'];
     const missing = requiredVars.filter(varName => !process.env[varName]);
     
     if (missing.length > 0) {
       throw new Error(`Missing environment variables: ${missing.join(', ')}`);
     }
     
+    // Check if we have refresh token in env or stored credentials
+    let refreshToken = process.env.REFRESH_TOKEN;
+    
+    if (!refreshToken) {
+      // Try to load from stored credentials
+      try {
+        const path = await import('path');
+        const fs = await import('fs/promises');
+        const { fileURLToPath } = await import('url');
+        
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
+        
+        const credentialsData = await fs.readFile(credentialsPath, 'utf8');
+        const credentials = JSON.parse(credentialsData);
+        refreshToken = credentials.refresh_token;
+        
+        logger.info('Using stored refresh token from temp credentials');
+      } catch (error) {
+        throw new Error('No refresh token found in environment variables or stored credentials. Please visit /gmail-auth to authorize.');
+      }
+    }
+    
     // Create OAuth2 client
     const oauth2Client = new google.auth.OAuth2(
       process.env.CLIENT_ID,
       process.env.CLIENT_SECRET,
-      'https://developers.google.com/oauthplayground'
+      process.env.REDIRECT_URI || 'https://developers.google.com/oauthplayground'
     );
     
     oauth2Client.setCredentials({
-      refresh_token: process.env.REFRESH_TOKEN,
+      refresh_token: refreshToken,
     });
     
     // Test token refresh

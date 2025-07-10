@@ -110,9 +110,12 @@ router.get('/oauth2callback', async (req, res) => {
       client_secret: process.env.CLIENT_SECRET,
       refresh_token: tokens.refresh_token,
       access_token: tokens.access_token,
+      expiry_date: tokens.expiry_date,
       email_address: profile.data.emailAddress,
       created_at: new Date().toISOString()
     }, null, 2));
+
+    logger.info('✅ Credentials saved to temp file for automatic loading');
 
     // Return success page with credentials
     res.send(`
@@ -210,24 +213,25 @@ REDIRECT_URI=${req.protocol}://${req.get('host')}/oauth2callback
             <strong>⚠️ Important:</strong>
             <ul>
               <li>Save these credentials securely</li>
-              <li>Add them to your Render environment variables</li>
-              <li>Restart your service after updating</li>
+              <li><strong>Option 1:</strong> Add them to your Render environment variables and restart</li>
+              <li><strong>Option 2:</strong> The system will automatically use stored credentials</li>
               <li>Never share these credentials publicly</li>
+              <li>Credentials are automatically refreshed when they expire</li>
             </ul>
           </div>
 
           <h3>🚀 Next Steps</h3>
           <ol>
-            <li>Copy the environment variables above</li>
-            <li>Go to your Render dashboard</li>
-            <li>Update your service's environment variables</li>
-            <li>Restart your service</li>
-            <li>Test the Gmail API using the test button</li>
+            <li><strong>Automatic (Recommended):</strong> The system will use stored credentials automatically</li>
+            <li><strong>Manual:</strong> Copy environment variables to Render dashboard and restart</li>
+            <li>Test the Gmail API to confirm everything works</li>
+            <li>Submit a form to test email sending</li>
           </ol>
 
           <div style="text-align: center; margin-top: 30px;">
             <a href="/test-gmail" class="btn">🧪 Test Gmail API</a>
             <a href="/" class="btn">🏠 Back to Home</a>
+            <a href="/credentials-status" class="btn">📋 Check Status</a>
           </div>
         </div>
 
@@ -394,13 +398,15 @@ router.get('/credentials-status', async (req, res) => {
         status: 'credentials_found',
         email: credentials.email_address,
         created_at: credentials.created_at,
-        has_refresh_token: !!credentials.refresh_token
+        has_refresh_token: !!credentials.refresh_token,
+        has_access_token: !!credentials.access_token,
+        expires_at: credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : null
       });
     } catch (fileError) {
       res.json({
         success: false,
         status: 'no_credentials',
-        message: 'No stored credentials found'
+        message: 'No stored credentials found. Please visit /gmail-auth to authorize.'
       });
     }
   } catch (error) {

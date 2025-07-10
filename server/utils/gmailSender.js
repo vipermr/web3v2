@@ -23,19 +23,113 @@ const logger = winston.createLogger({
   ],
 });
 
-// Gmail OAuth2 configuration
-const oauth2Client = new google.auth.OAuth2(
-  process.env.CLIENT_ID,
-  process.env.CLIENT_SECRET,
-  process.env.REDIRECT_URI
-);
+// Global OAuth2 client and Gmail instance
+let oauth2Client = null;
+let gmail = null;
+let lastTokenRefresh = 0;
+const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000; // 50 minutes
 
-oauth2Client.setCredentials({
-  refresh_token: process.env.REFRESH_TOKEN,
-});
+// Initialize OAuth2 client
+function initializeOAuth2Client() {
+  if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+    throw new Error('CLIENT_ID and CLIENT_SECRET must be configured');
+  }
 
-// Gmail API instance
-const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+  oauth2Client = new google.auth.OAuth2(
+    process.env.CLIENT_ID,
+    process.env.CLIENT_SECRET,
+    process.env.REDIRECT_URI || 'https://developers.google.com/oauthplayground'
+  );
+
+  if (process.env.REFRESH_TOKEN) {
+    oauth2Client.setCredentials({
+      refresh_token: process.env.REFRESH_TOKEN,
+    });
+  }
+
+  gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+  logger.info('OAuth2 client initialized successfully');
+}
+
+// Auto-refresh access token if needed
+async function ensureValidAccessToken() {
+  const now = Date.now();
+  
+  // Check if we need to refresh the token
+  if (!oauth2Client) {
+    initializeOAuth2Client();
+  }
+
+  // If we don't have a refresh token, try to load from stored credentials
+  if (!process.env.REFRESH_TOKEN) {
+    await loadStoredCredentials();
+  }
+
+  // Check if token needs refresh (every 50 minutes or if no access token)
+  const needsRefresh = (
+    now - lastTokenRefresh > TOKEN_REFRESH_INTERVAL ||
+    !oauth2Client.credentials.access_token ||
+    (oauth2Client.credentials.expiry_date && oauth2Client.credentials.expiry_date <= now + 60000) // 1 minute buffer
+  );
+
+  if (needsRefresh) {
+    logger.info('Access token expired or missing, refreshing...');
+    
+    try {
+      const { credentials } = await oauth2Client.refreshAccessToken();
+      oauth2Client.setCredentials(credentials);
+      lastTokenRefresh = now;
+      
+      logger.info('✅ Access token refreshed successfully', {
+        expires_at: credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : 'unknown'
+      });
+      
+      return credentials.access_token;
+    } catch (error) {
+      logger.error('❌ Failed to refresh access token:', error.message);
+      
+      // If refresh fails, try to load stored credentials as fallback
+      const storedToken = await loadStoredCredentials();
+      if (storedToken) {
+        return storedToken;
+      }
+      
+      throw new Error(`Token refresh failed: ${error.message}. Please re-authorize at /gmail-auth`);
+    }
+  }
+
+  return oauth2Client.credentials.access_token;
+}
+
+// Load stored credentials from file (fallback)
+async function loadStoredCredentials() {
+  try {
+    const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
+    const credentialsData = await fs.readFile(credentialsPath, 'utf8');
+    const credentials = JSON.parse(credentialsData);
+    
+    if (credentials.refresh_token) {
+      logger.info('Loading stored credentials from temp file');
+      
+      oauth2Client.setCredentials({
+        refresh_token: credentials.refresh_token,
+        access_token: credentials.access_token
+      });
+      
+      // Try to refresh the token
+      const { credentials: newCredentials } = await oauth2Client.refreshAccessToken();
+      oauth2Client.setCredentials(newCredentials);
+      lastTokenRefresh = Date.now();
+      
+      logger.info('✅ Successfully loaded and refreshed stored credentials');
+      return newCredentials.access_token;
+    }
+  } catch (error) {
+    logger.warn('Could not load stored credentials:', error.message);
+  }
+  
+  return null;
+}
 
 // Helper function to load and compile templates
 function loadTemplate(templateId) {
@@ -115,32 +209,29 @@ export async function sendEmail(formData) {
       to: process.env.TO_EMAIL
     });
 
-    // Validate required environment variables
-    const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'REFRESH_TOKEN', 'TO_EMAIL'];
+    // Validate required environment variables (REFRESH_TOKEN is optional if we have stored credentials)
+    const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'TO_EMAIL'];
     const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
     
     if (missingEnvVars.length > 0) {
       logger.error('Missing environment variables', { missingEnvVars });
-      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}. Please visit /gmail-setup for setup instructions.`);
+      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}. Please visit /gmail-auth for setup.`);
     }
 
-    // Get fresh access token
+    // Ensure we have a valid access token (auto-refresh if needed)
     try {
-      const { credentials } = await oauth2Client.refreshAccessToken();
-      
-      if (!credentials.access_token) {
-        throw new Error('Failed to obtain access token from refresh token');
+      const accessToken = await ensureValidAccessToken();
+      if (!accessToken) {
+        throw new Error('Failed to obtain valid access token');
       }
-      
-      oauth2Client.setCredentials(credentials);
-      logger.info('OAuth2 token refreshed successfully', { emailId });
+      logger.info('✅ Valid access token confirmed', { emailId });
     } catch (authError) {
       logger.error('OAuth2 authentication failed', { 
         emailId, 
         error: authError.message,
-        hint: 'Your refresh token may have expired. Visit /gmail-setup to generate new credentials.'
+        hint: 'Your credentials may have expired. Visit /gmail-auth to re-authorize.'
       });
-      throw new Error(`Gmail authentication failed: ${authError.message}. Please visit /gmail-setup to generate new credentials.`);
+      throw new Error(`Gmail authentication failed: ${authError.message}. Please visit /gmail-auth to re-authorize.`);
     }
 
 
@@ -245,8 +336,8 @@ export async function sendEmail(formData) {
 // Test email function for debugging
 export async function testEmailConnection() {
   try {
-    const { credentials } = await oauth2Client.refreshAccessToken();
-    oauth2Client.setCredentials(credentials);
+    // Ensure valid access token
+    await ensureValidAccessToken();
 
     const testData = {
       name: 'Test User',
