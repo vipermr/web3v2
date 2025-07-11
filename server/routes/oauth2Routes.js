@@ -121,6 +121,9 @@ router.get('/oauth2callback', async (req, res) => {
     // Test the tokens by making a Gmail API call
     oauth2Client.setCredentials(tokens);
     
+    // Update environment variables in memory immediately
+    process.env.REFRESH_TOKEN = tokens.refresh_token;
+    
     // Test with Gmail API to verify permissions
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
     
@@ -145,7 +148,7 @@ router.get('/oauth2callback', async (req, res) => {
       client_secret: process.env.CLIENT_SECRET,
       refresh_token: tokens.refresh_token,
       access_token: tokens.access_token,
-      expiry_date: tokens.expiry_date,
+      expiry_date: tokens.expiry_date || (Date.now() + 3600000), // 1 hour from now if not provided
       email_address: profile.data.emailAddress,
       created_at: new Date().toISOString(),
       redirect_uri: redirectUri,
@@ -159,8 +162,7 @@ router.get('/oauth2callback', async (req, res) => {
     await fs.writeFile(credentialsPath, JSON.stringify(credentialsData, null, 2));
     logger.info('✅ Credentials saved to temp file for automatic loading');
 
-    // Also update environment variables in memory
-    process.env.REFRESH_TOKEN = tokens.refresh_token;
+    // Update environment variables in memory
     process.env.TO_EMAIL = profile.data.emailAddress;
 
     // Return success page with credentials

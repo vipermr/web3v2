@@ -23,11 +23,12 @@ const logger = winston.createLogger({
   ],
 });
 
-// Global OAuth2 client and Gmail instance
+// Global OAuth2 client and credentials
 let oauth2Client = null;
 let gmail = null;
+let cachedCredentials = null;
 let lastTokenRefresh = 0;
-const TOKEN_REFRESH_INTERVAL = 50 * 60 * 1000; // 50 minutes
+const TOKEN_REFRESH_INTERVAL = 55 * 60 * 1000; // 55 minutes (Google tokens last 1 hour)
 
 // Get the correct redirect URI based on environment
 function getRedirectUri() {
@@ -37,7 +38,80 @@ function getRedirectUri() {
   return 'http://localhost:3000/oauth2callback';
 }
 
-// Initialize OAuth2 client with proper credentials
+// Load credentials from stored file or environment
+async function loadCredentials() {
+  try {
+    // First try to load from stored file
+    const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
+    
+    try {
+      const credentialsData = await fs.readFile(credentialsPath, 'utf8');
+      const storedCredentials = JSON.parse(credentialsData);
+      
+      if (storedCredentials.refresh_token) {
+        logger.info('✅ Loading credentials from stored file');
+        
+        // Update environment variables in memory
+        process.env.REFRESH_TOKEN = storedCredentials.refresh_token;
+        process.env.TO_EMAIL = storedCredentials.email_address;
+        
+        return {
+          refresh_token: storedCredentials.refresh_token,
+          access_token: storedCredentials.access_token,
+          expiry_date: storedCredentials.expiry_date,
+          email_address: storedCredentials.email_address
+        };
+      }
+    } catch (fileError) {
+      logger.info('No stored credentials file found, using environment variables');
+    }
+
+    // Fallback to environment variables
+    if (process.env.REFRESH_TOKEN) {
+      return {
+        refresh_token: process.env.REFRESH_TOKEN,
+        access_token: null, // Will be refreshed
+        expiry_date: null,
+        email_address: process.env.TO_EMAIL
+      };
+    }
+
+    throw new Error('No credentials found in stored file or environment variables');
+  } catch (error) {
+    logger.error('Failed to load credentials:', error.message);
+    throw error;
+  }
+}
+
+// Save credentials to file
+async function saveCredentials(credentials) {
+  try {
+    const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
+    
+    const credentialsData = {
+      client_id: process.env.CLIENT_ID,
+      client_secret: process.env.CLIENT_SECRET,
+      refresh_token: credentials.refresh_token,
+      access_token: credentials.access_token,
+      expiry_date: credentials.expiry_date,
+      email_address: credentials.email_address || process.env.TO_EMAIL,
+      created_at: new Date().toISOString(),
+      redirect_uri: getRedirectUri(),
+      scopes: [
+        'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/userinfo.email'
+      ]
+    };
+    
+    await fs.writeFile(credentialsPath, JSON.stringify(credentialsData, null, 2));
+    logger.info('✅ Credentials saved to file');
+  } catch (error) {
+    logger.warn('Could not save credentials to file:', error.message);
+  }
+}
+
+// Initialize OAuth2 client
 async function initializeOAuth2Client() {
   try {
     if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
@@ -51,121 +125,109 @@ async function initializeOAuth2Client() {
       redirectUri
     );
 
-    // Try to load credentials from stored file first
-    let credentials = null;
+    // Load credentials
+    cachedCredentials = await loadCredentials();
     
-    try {
-      const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
-      const credentialsData = await fs.readFile(credentialsPath, 'utf8');
-      const storedCredentials = JSON.parse(credentialsData);
-      
-      if (storedCredentials.refresh_token) {
-        logger.info('✅ Loading credentials from stored file');
-        credentials = {
-          refresh_token: storedCredentials.refresh_token,
-          access_token: storedCredentials.access_token,
-          expiry_date: storedCredentials.expiry_date
-        };
-        
-        // Update environment variables in memory
-        process.env.REFRESH_TOKEN = storedCredentials.refresh_token;
-        process.env.TO_EMAIL = storedCredentials.email_address;
-      }
-    } catch (fileError) {
-      logger.info('No stored credentials file found, using environment variables');
-    }
+    // Set credentials in OAuth2 client
+    oauth2Client.setCredentials({
+      refresh_token: cachedCredentials.refresh_token,
+      access_token: cachedCredentials.access_token,
+      expiry_date: cachedCredentials.expiry_date
+    });
 
-    // Fallback to environment variables
-    if (!credentials && process.env.REFRESH_TOKEN) {
-      credentials = {
-        refresh_token: process.env.REFRESH_TOKEN
-      };
-    }
-
-    if (credentials) {
-      oauth2Client.setCredentials(credentials);
-      gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-      logger.info(`✅ OAuth2 client initialized with redirect URI: ${redirectUri}`);
-      return true;
-    } else {
-      throw new Error('No refresh token available');
-    }
+    gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    logger.info(`✅ OAuth2 client initialized with redirect URI: ${redirectUri}`);
+    
+    return true;
   } catch (error) {
     logger.error('Failed to initialize OAuth2 client:', error.message);
     throw error;
   }
 }
 
-// Auto-refresh access token if needed
-async function ensureValidAccessToken() {
-  const now = Date.now();
-  
-  // Initialize client if not already done
-  if (!oauth2Client) {
-    await initializeOAuth2Client();
-  }
-
-  // Check if we have a refresh token
-  if (!oauth2Client.credentials.refresh_token) {
-    throw new Error('No refresh token available. Please visit /gmail-auth-select to authorize.');
-  }
-
-  // Check if token needs refresh
-  const needsRefresh = (
-    now - lastTokenRefresh > TOKEN_REFRESH_INTERVAL ||
-    !oauth2Client.credentials.access_token ||
-    (oauth2Client.credentials.expiry_date && oauth2Client.credentials.expiry_date <= now + 60000) // 1 minute buffer
-  );
-
-  if (needsRefresh) {
-    logger.info('🔄 Access token expired or missing, refreshing...');
+// Refresh access token with better error handling
+async function refreshAccessToken() {
+  try {
+    logger.info('🔄 Refreshing access token...');
     
-    try {
-      // Use the refresh token to get a new access token
-      const { credentials } = await oauth2Client.refreshAccessToken();
-      
-      // Update the credentials
-      oauth2Client.setCredentials({
-        ...oauth2Client.credentials,
-        access_token: credentials.access_token,
-        expiry_date: credentials.expiry_date
-      });
-      
-      lastTokenRefresh = now;
-      
-      logger.info('✅ Access token refreshed successfully', {
-        expires_at: credentials.expiry_date ? new Date(credentials.expiry_date).toISOString() : 'unknown'
-      });
-      
-      // Update stored credentials file
-      try {
-        const credentialsPath = path.join(__dirname, '..', 'temp_credentials.json');
-        const existingData = await fs.readFile(credentialsPath, 'utf8');
-        const storedCredentials = JSON.parse(existingData);
-        
-        storedCredentials.access_token = credentials.access_token;
-        storedCredentials.expiry_date = credentials.expiry_date;
-        
-        await fs.writeFile(credentialsPath, JSON.stringify(storedCredentials, null, 2));
-        logger.info('✅ Updated stored credentials with new access token');
-      } catch (updateError) {
-        logger.warn('Could not update stored credentials file:', updateError.message);
-      }
-      
-      return credentials.access_token;
-    } catch (error) {
-      logger.error('❌ Failed to refresh access token:', error.message);
-      
-      // If refresh fails, the refresh token might be invalid
-      if (error.message.includes('invalid_grant')) {
-        throw new Error('Refresh token is invalid or expired. Please visit /gmail-auth-select to re-authorize.');
-      }
-      
-      throw new Error(`Token refresh failed: ${error.message}. Please re-authorize at /gmail-auth-select`);
+    if (!oauth2Client) {
+      await initializeOAuth2Client();
     }
-  }
 
-  return oauth2Client.credentials.access_token;
+    if (!oauth2Client.credentials.refresh_token) {
+      throw new Error('No refresh token available. Please visit /gmail-auth-select to re-authorize.');
+    }
+
+    // Use Google's refresh token endpoint directly for better control
+    const { credentials } = await oauth2Client.refreshAccessToken();
+    
+    if (!credentials.access_token) {
+      throw new Error('Failed to obtain new access token');
+    }
+
+    // Update cached credentials
+    cachedCredentials.access_token = credentials.access_token;
+    cachedCredentials.expiry_date = credentials.expiry_date;
+    
+    // Update OAuth2 client
+    oauth2Client.setCredentials({
+      refresh_token: cachedCredentials.refresh_token,
+      access_token: credentials.access_token,
+      expiry_date: credentials.expiry_date
+    });
+
+    // Save updated credentials
+    await saveCredentials(cachedCredentials);
+    
+    lastTokenRefresh = Date.now();
+    
+    const expiresIn = credentials.expiry_date ? Math.floor((credentials.expiry_date - Date.now()) / 1000 / 60) : 60;
+    logger.info(`✅ Access token refreshed successfully, expires in ${expiresIn} minutes`);
+    
+    return credentials.access_token;
+  } catch (error) {
+    logger.error('❌ Failed to refresh access token:', error.message);
+    
+    if (error.message.includes('invalid_grant')) {
+      throw new Error('Refresh token is invalid or expired. Please visit /gmail-auth-select to re-authorize.');
+    }
+    
+    throw new Error(`Token refresh failed: ${error.message}`);
+  }
+}
+
+// Ensure valid access token with smart refresh logic
+async function ensureValidAccessToken() {
+  try {
+    const now = Date.now();
+    
+    // Initialize client if not already done
+    if (!oauth2Client) {
+      await initializeOAuth2Client();
+    }
+
+    // Check if we need to refresh the token
+    const needsRefresh = (
+      !oauth2Client.credentials.access_token ||
+      (oauth2Client.credentials.expiry_date && oauth2Client.credentials.expiry_date <= now + 5 * 60 * 1000) || // 5 minutes buffer
+      (now - lastTokenRefresh > TOKEN_REFRESH_INTERVAL)
+    );
+
+    if (needsRefresh) {
+      const accessToken = await refreshAccessToken();
+      return accessToken;
+    }
+
+    // Token is still valid
+    const expiresIn = oauth2Client.credentials.expiry_date ? 
+      Math.floor((oauth2Client.credentials.expiry_date - now) / 1000 / 60) : 'unknown';
+    logger.info(`✅ Using existing access token, expires in ${expiresIn} minutes`);
+    
+    return oauth2Client.credentials.access_token;
+  } catch (error) {
+    logger.error('❌ Failed to ensure valid access token:', error.message);
+    throw error;
+  }
 }
 
 // Helper function to check if file exists
@@ -178,37 +240,98 @@ async function fileExists(filePath) {
   }
 }
 
-// Helper function to load and compile templates
+// Simple email template (fallback)
+const simpleEmailTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>New Form Submission</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .content { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .field { margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .label { font-weight: bold; color: #555; }
+        .value { margin-top: 5px; }
+        .footer { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📧 New Form Submission</h2>
+        <p>Received on {{submissionDate}} at {{submissionTime}}</p>
+    </div>
+    
+    <div class="content">
+        <div class="field">
+            <div class="label">Name:</div>
+            <div class="value">{{name}}</div>
+        </div>
+        
+        <div class="field">
+            <div class="label">Email:</div>
+            <div class="value">{{email}}</div>
+        </div>
+        
+        <div class="field">
+            <div class="label">Subject:</div>
+            <div class="value">{{subject}}</div>
+        </div>
+        
+        {{#if phone}}
+        <div class="field">
+            <div class="label">Phone:</div>
+            <div class="value">{{phone}}</div>
+        </div>
+        {{/if}}
+        
+        {{#if company}}
+        <div class="field">
+            <div class="label">Company:</div>
+            <div class="value">{{company}}</div>
+        </div>
+        {{/if}}
+        
+        <div class="field">
+            <div class="label">Message:</div>
+            <div class="value" style="white-space: pre-wrap;">{{message}}</div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p><strong>Submission ID:</strong> {{submissionId}}</p>
+        <p><strong>IP Address:</strong> {{ipAddress}}</p>
+        <p><strong>Timestamp:</strong> {{timestamp}}</p>
+        <p>This email was generated automatically by your form submission system.</p>
+    </div>
+</body>
+</html>
+`;
+
+// Load and compile templates
 async function loadTemplate(templateId) {
   try {
     const templatePath = path.join(__dirname, '..', 'templates', `${templateId}.html`);
     
     const templateExists = await fileExists(templatePath);
     if (!templateExists) {
-      logger.warn(`Template not found: ${templateId}, falling back to default`);
-      const defaultPath = path.join(__dirname, '..', 'templates', 'default.html');
-      
-      const defaultExists = await fileExists(defaultPath);
-      if (!defaultExists) {
-        throw new Error('Default template not found');
-      }
-      
-      const defaultTemplate = await fs.readFile(defaultPath, 'utf-8');
-      return handlebars.compile(defaultTemplate);
+      logger.warn(`Template not found: ${templateId}, using simple template`);
+      return handlebars.compile(simpleEmailTemplate);
     }
     
     const template = await fs.readFile(templatePath, 'utf-8');
     return handlebars.compile(template);
   } catch (error) {
-    logger.error('Template loading error', { templateId, error: error.message });
-    throw error;
+    logger.warn('Template loading error, using simple template', { templateId, error: error.message });
+    return handlebars.compile(simpleEmailTemplate);
   }
 }
 
-// Helper function to create email message
+// Create email message
 function createEmailMessage(to, subject, htmlContent, textContent, fromEmail = null) {
-  const from = fromEmail || process.env.TO_EMAIL;
-  const replyTo = fromEmail || process.env.TO_EMAIL;
+  const from = fromEmail || process.env.TO_EMAIL || 'noreply@example.com';
+  const replyTo = fromEmail || process.env.TO_EMAIL || 'noreply@example.com';
   
   const messageParts = [
     `To: ${to}`,
@@ -236,7 +359,7 @@ function createEmailMessage(to, subject, htmlContent, textContent, fromEmail = n
   return messageParts.join('\n');
 }
 
-// Helper function to convert text to plain text
+// Convert HTML to plain text
 function htmlToText(html) {
   return html
     .replace(/<style[^>]*>.*?<\/style>/gis, '')
@@ -259,29 +382,17 @@ export async function sendEmail(formData) {
     });
 
     // Validate required environment variables
-    const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET'];
-    const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
-    if (missingEnvVars.length > 0) {
-      logger.error('Missing environment variables', { missingEnvVars });
-      throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}. Please visit /gmail-auth-select for setup.`);
+    if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET) {
+      throw new Error('CLIENT_ID and CLIENT_SECRET must be configured. Please visit /gmail-auth-select for setup.');
     }
 
-    // Ensure we have a valid access token (auto-refresh if needed)
-    try {
-      const accessToken = await ensureValidAccessToken();
-      if (!accessToken) {
-        throw new Error('Failed to obtain valid access token');
-      }
-      logger.info('✅ Valid access token confirmed', { emailId });
-    } catch (authError) {
-      logger.error('OAuth2 authentication failed', { 
-        emailId, 
-        error: authError.message,
-        hint: 'Your credentials may have expired. Visit /gmail-auth-select to re-authorize.'
-      });
-      throw new Error(`Gmail authentication failed: ${authError.message}`);
+    // Ensure we have a valid access token
+    const accessToken = await ensureValidAccessToken();
+    if (!accessToken) {
+      throw new Error('Failed to obtain valid access token');
     }
+    
+    logger.info('✅ Valid access token confirmed', { emailId });
 
     // Check if we have TO_EMAIL
     if (!process.env.TO_EMAIL) {
@@ -301,16 +412,11 @@ export async function sendEmail(formData) {
     };
 
     // Load and compile template
-    let htmlContent, textContent;
-    try {
-      const template = await loadTemplate(formData.template_id);
-      htmlContent = template(templateData);
-      textContent = htmlToText(htmlContent);
-      logger.info('✅ Email template processed successfully', { emailId, template: formData.template_id });
-    } catch (templateError) {
-      logger.error('Template processing failed', { emailId, error: templateError.message });
-      throw new Error(`Template processing failed: ${templateError.message}`);
-    }
+    const template = await loadTemplate(formData.template_id);
+    const htmlContent = template(templateData);
+    const textContent = htmlToText(htmlContent);
+    
+    logger.info('✅ Email template processed successfully', { emailId, template: formData.template_id });
 
     // Create email subject
     const emailSubject = `New Form Submission: ${formData.subject}`;
@@ -328,24 +434,14 @@ export async function sendEmail(formData) {
     const encodedMessage = Buffer.from(emailMessage).toString('base64url');
 
     // Send email via Gmail API
-    let result;
-    try {
-      result = await gmail.users.messages.send({
-        userId: 'me',
-        requestBody: {
-          raw: encodedMessage,
-        },
-      });
-      logger.info('✅ Gmail API send successful', { emailId, messageId: result.data.id });
-    } catch (gmailError) {
-      logger.error('Gmail API send failed', { 
-        emailId, 
-        error: gmailError.message,
-        code: gmailError.code,
-        hint: 'Check Gmail API permissions and TO_EMAIL address'
-      });
-      throw new Error(`Gmail send failed: ${gmailError.message}. Please check Gmail API permissions.`);
-    }
+    const result = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: encodedMessage,
+      },
+    });
+    
+    logger.info('✅ Gmail API send successful', { emailId, messageId: result.data.id });
 
     logger.info('🎉 Email sent successfully', {
       emailId,
@@ -368,14 +464,12 @@ export async function sendEmail(formData) {
       emailId,
       submissionId: formData.submissionId,
       error: error.message,
-      stack: error.stack,
-      code: error.code
+      stack: error.stack
     });
 
     return {
       success: false,
       error: error.message,
-      code: error.code,
       emailId,
       details: {
         timestamp: new Date().toISOString(),
@@ -386,7 +480,7 @@ export async function sendEmail(formData) {
   }
 }
 
-// Test email function for debugging
+// Test email function
 export async function testEmailConnection() {
   try {
     // Ensure valid access token
