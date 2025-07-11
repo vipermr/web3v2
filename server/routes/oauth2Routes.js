@@ -124,8 +124,9 @@ router.get('/oauth2callback', async (req, res) => {
     // Test with Gmail API to verify permissions
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
     
+    let profile;
     try {
-      const profile = await gmail.users.getProfile({ userId: 'me' });
+      profile = await gmail.users.getProfile({ userId: 'me' });
       logger.info(`✅ Gmail API test successful for: ${profile.data.emailAddress}`);
       
       // Test sending capability by checking labels (this verifies send permission)
