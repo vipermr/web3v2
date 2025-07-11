@@ -359,14 +359,27 @@ app.listen(PORT, () => {
   
   // Check if Gmail API is configured
   const requiredEnvVars = ['CLIENT_ID', 'CLIENT_SECRET', 'REFRESH_TOKEN', 'TO_EMAIL'];
-  const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  const missingRequiredVars = requiredEnvVars.filter(varName => !process.env[varName]);
   
-  if (missingEnvVars.length > 0) {
-    logger.warn(`⚠️  Missing Gmail API configuration: ${missingEnvVars.join(', ')}`);
+  if (missingRequiredVars.length > 0) {
+    logger.warn(`⚠️  Missing Gmail API configuration: ${missingRequiredVars.join(', ')}`);
     logger.warn(`📝 Please update your .env file with the missing variables`);
     logger.warn(`📚 See USERGUIDE.md for setup instructions`);
   } else {
     logger.info(`📧 Gmail API configured and ready`);
+    
+    // Check configured email recipients
+    const configuredEmails = [];
+    if (process.env.TO_EMAIL) configuredEmails.push('TO_EMAIL');
+    for (let i = 1; i <= 10; i++) {
+      if (process.env[`TO_EMAIL${i}`]) configuredEmails.push(`TO_EMAIL${i}`);
+    }
+    
+    if (configuredEmails.length > 0) {
+      logger.info(`📬 Configured email recipients: ${configuredEmails.join(', ')} (${configuredEmails.length} total)`);
+    } else {
+      logger.warn(`⚠️  No email recipients configured. Please set TO_EMAIL and/or TO_EMAIL1-TO_EMAIL10`);
+    }
   }
   
   logger.info(`🛡️ Security features: ${ENABLE_RATE_LIMITING ? 'Rate limiting enabled' : 'Rate limiting disabled'}`);

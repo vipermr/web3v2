@@ -11,12 +11,17 @@ router.get('/test-gmail', async (req, res) => {
     
     if (result.success) {
       console.log('✅ Gmail test successful:', result.message);
+      
+      // Also check configured email addresses
+      const configuredEmails = getConfiguredEmailAddresses();
+      
       res.json({
         success: true,
         message: result.message,
         data: {
           emailAddress: result.emailAddress,
           accessToken: result.accessToken,
+          configuredRecipients: configuredEmails,
           timestamp: new Date().toISOString()
         }
       });
@@ -40,6 +45,31 @@ router.get('/test-gmail', async (req, res) => {
     });
   }
 });
+
+// Helper function to get configured email addresses
+function getConfiguredEmailAddresses() {
+  const emails = [];
+  
+  // Check primary TO_EMAIL
+  if (process.env.TO_EMAIL) {
+    emails.push({ key: 'TO_EMAIL', email: process.env.TO_EMAIL, status: 'configured' });
+  } else {
+    emails.push({ key: 'TO_EMAIL', email: null, status: 'missing' });
+  }
+  
+  // Check TO_EMAIL1 through TO_EMAIL10
+  for (let i = 1; i <= 10; i++) {
+    const envKey = `TO_EMAIL${i}`;
+    const email = process.env[envKey];
+    if (email) {
+      emails.push({ key: envKey, email, status: 'configured' });
+    } else {
+      emails.push({ key: envKey, email: null, status: 'missing' });
+    }
+  }
+  
+  return emails;
+}
 
 // Gmail setup instructions endpoint
 router.get('/gmail-setup', (req, res) => {

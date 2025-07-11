@@ -388,9 +388,14 @@ function App() {
                       <strong>Submission ID:</strong> {response.submissionId}
                     </p>
                   )}
-                  {response.messageId && (
+                  {response.totalSent !== undefined && (
                     <p className="text-green-700">
-                      <strong>Gmail Message ID:</strong> {response.messageId}
+                      <strong>Emails Sent:</strong> {response.totalSent} successful
+                    </p>
+                  )}
+                  {response.totalFailed !== undefined && response.totalFailed > 0 && (
+                    <p className="text-red-700">
+                      <strong>Failed Emails:</strong> {response.totalFailed}
                     </p>
                   )}
                   {response.processingTime && (
@@ -404,6 +409,44 @@ function App() {
                     </p>
                   )}
                 </div>
+
+                {response.emailResults && (
+                  <div className="mt-4">
+                    <h4 className="font-semibold text-gray-700 mb-2">Email Results:</h4>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {response.emailResults.map((result, index) => (
+                        <div
+                          key={index}
+                          className={`p-2 rounded text-xs ${
+                            result.success
+                              ? 'bg-green-100 text-green-800 border border-green-200'
+                              : 'bg-red-100 text-red-800 border border-red-200'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{result.envKey}</span>
+                            <span className={result.success ? 'text-green-600' : 'text-red-600'}>
+                              {result.success ? '✅ Success' : '❌ Failed'}
+                            </span>
+                          </div>
+                          <div className="text-gray-600 mt-1">
+                            {result.email}
+                          </div>
+                          {result.messageId && (
+                            <div className="text-gray-500 mt-1">
+                              ID: {result.messageId}
+                            </div>
+                          )}
+                          {result.error && (
+                            <div className="text-red-600 mt-1">
+                              Error: {result.error}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {response.details && (
                   <details className="mt-4">
@@ -427,7 +470,7 @@ function App() {
                     <Mail className="w-4 h-4" />
                     <p className="font-semibold">Setup Required:</p>
                   </div>
-                  <p className="mb-2">To send emails, configure your Gmail API credentials in the server/.env file</p>
+                  <p className="mb-2">To send emails, configure your Gmail API credentials and email recipients (TO_EMAIL, TO_EMAIL1-TO_EMAIL10) in the server/.env file</p>
                   <p className="text-blue-600">See USERGUIDE.md for detailed setup instructions</p>
                 </div>
               </div>
@@ -446,6 +489,7 @@ function App() {
                 <p><strong>Content-Type:</strong> application/json</p>
                 <p><strong>Required fields:</strong> name, email, subject, message</p>
                 <p><strong>Optional fields:</strong> phone, company, template_id</p>
+                <p><strong>📧 Recipients:</strong> Supports up to 11 email addresses (TO_EMAIL + TO_EMAIL1-TO_EMAIL10)</p>
                 <p><strong>⚠️ Note:</strong> Gmail API must be configured for email sending to work</p>
               </div>
               

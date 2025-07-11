@@ -241,7 +241,8 @@ router.post('/submit-form', async (req, res) => {
     const processingTime = Date.now() - startTime;
     logger.info('Form submission processed successfully', {
       submissionId,
-      messageId: emailResult.messageId,
+      totalSent: emailResult.totalSent,
+      totalFailed: emailResult.totalFailed,
       processingTime,
       template: formData.template_id
     });
@@ -250,7 +251,9 @@ router.post('/submit-form', async (req, res) => {
       success: true,
       message: 'Form submitted and email sent successfully!',
       submissionId,
-      messageId: emailResult.messageId,
+      emailResults: emailResult.results,
+      totalSent: emailResult.totalSent,
+      totalFailed: emailResult.totalFailed,
       processingTime,
       timestamp: new Date().toISOString()
     });

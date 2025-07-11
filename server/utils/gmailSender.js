@@ -378,7 +378,7 @@ export async function sendEmail(formData) {
       emailId,
       submissionId: formData.submissionId,
       template: formData.template_id,
-      to: process.env.TO_EMAIL
+      recipients: 'multiple emails'
     });
 
     // Validate required environment variables
@@ -394,10 +394,14 @@ export async function sendEmail(formData) {
     
     logger.info('✅ Valid access token confirmed', { emailId });
 
-    // Check if we have TO_EMAIL
-    if (!process.env.TO_EMAIL) {
-      throw new Error('TO_EMAIL not configured. Please visit /gmail-auth-select to authorize and set up email destination.');
+    // Get all configured email addresses
+    const emailAddresses = getConfiguredEmails();
+    
+    if (emailAddresses.length === 0) {
+      throw new Error('No email addresses configured. Please set TO_EMAIL and/or TO_EMAIL1-TO_EMAIL10 in your environment variables.');
     }
+    
+    logger.info(`📧 Found ${emailAddresses.length} configured email addresses`, { emailId, emails: emailAddresses });
 
     // Prepare template data
     const templateData = {
@@ -421,40 +425,33 @@ export async function sendEmail(formData) {
     // Create email subject
     const emailSubject = `New Form Submission: ${formData.subject}`;
 
-    // Create email message
-    const emailMessage = createEmailMessage(
-      process.env.TO_EMAIL,
+    // Send emails to all configured addresses with delays
+    const results = await sendToMultipleEmails(
+      emailId,
+      emailAddresses,
       emailSubject,
       htmlContent,
       textContent,
-      formData.email
+      formData
     );
-
-    // Encode message
-    const encodedMessage = Buffer.from(emailMessage).toString('base64url');
-
-    // Send email via Gmail API
-    const result = await gmail.users.messages.send({
-      userId: 'me',
-      requestBody: {
-        raw: encodedMessage,
-      },
-    });
     
-    logger.info('✅ Gmail API send successful', { emailId, messageId: result.data.id });
-
-    logger.info('🎉 Email sent successfully', {
+    const successCount = results.filter(r => r.success).length;
+    const failureCount = results.filter(r => !r.success).length;
+    
+    logger.info('🎉 Email sending process completed', {
       emailId,
       submissionId: formData.submissionId,
-      messageId: result.data.id,
-      to: process.env.TO_EMAIL,
-      subject: emailSubject,
+      totalEmails: emailAddresses.length,
+      successCount,
+      failureCount,
       template: formData.template_id
     });
 
     return {
       success: true,
-      messageId: result.data.id,
+      results,
+      totalSent: successCount,
+      totalFailed: failureCount,
       emailId,
       timestamp: new Date().toISOString()
     };
@@ -478,6 +475,104 @@ export async function sendEmail(formData) {
       }
     };
   }
+}
+
+// Get all configured email addresses
+function getConfiguredEmails() {
+  const emails = [];
+  
+  // Add primary TO_EMAIL if configured
+  if (process.env.TO_EMAIL) {
+    emails.push({ key: 'TO_EMAIL', email: process.env.TO_EMAIL });
+  }
+  
+  // Add TO_EMAIL1 through TO_EMAIL10 if configured
+  for (let i = 1; i <= 10; i++) {
+    const envKey = `TO_EMAIL${i}`;
+    const email = process.env[envKey];
+    if (email) {
+      emails.push({ key: envKey, email });
+    }
+  }
+  
+  return emails;
+}
+
+// Send emails to multiple recipients with delays and logging
+async function sendToMultipleEmails(emailId, emailAddresses, subject, htmlContent, textContent, formData) {
+  const results = [];
+  
+  for (let i = 0; i < emailAddresses.length; i++) {
+    const { key, email } = emailAddresses[i];
+    const attemptNumber = i + 1;
+    
+    try {
+      logger.info(`📤 Sending email ${attemptNumber}/${emailAddresses.length} to ${key}`, {
+        emailId,
+        recipient: email,
+        envKey: key
+      });
+      
+      // Create email message for this recipient
+      const emailMessage = createEmailMessage(
+        email,
+        subject,
+        htmlContent,
+        textContent,
+        formData.email
+      );
+      
+      // Encode message
+      const encodedMessage = Buffer.from(emailMessage).toString('base64url');
+      
+      // Send email via Gmail API
+      const result = await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: {
+          raw: encodedMessage,
+        },
+      });
+      
+      logger.info(`✅ ${key} success`, {
+        emailId,
+        recipient: email,
+        messageId: result.data.id,
+        envKey: key
+      });
+      
+      results.push({
+        success: true,
+        envKey: key,
+        email,
+        messageId: result.data.id,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      logger.error(`❌ ${key} failed`, {
+        emailId,
+        recipient: email,
+        envKey: key,
+        error: error.message
+      });
+      
+      results.push({
+        success: false,
+        envKey: key,
+        email,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Add 1 second delay between emails (except for the last one)
+    if (i < emailAddresses.length - 1) {
+      logger.info(`⏳ Waiting 1 second before next email...`, { emailId });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  return results;
 }
 
 // Test email function

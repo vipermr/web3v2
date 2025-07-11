@@ -270,7 +270,19 @@ All templates support these dynamic variables:
 CLIENT_ID=your-google-oauth2-client-id
 CLIENT_SECRET=your-google-oauth2-client-secret
 REFRESH_TOKEN=your-gmail-api-refresh-token
-TO_EMAIL=destination@email.com
+
+# Email Recipients (up to 11 total)
+TO_EMAIL=primary@email.com
+TO_EMAIL1=first@email.com
+TO_EMAIL2=second@email.com
+TO_EMAIL3=third@email.com
+TO_EMAIL4=fourth@email.com
+TO_EMAIL5=fifth@email.com
+TO_EMAIL6=sixth@email.com
+TO_EMAIL7=seventh@email.com
+TO_EMAIL8=eighth@email.com
+TO_EMAIL9=ninth@email.com
+TO_EMAIL10=tenth@email.com
 ```
 
 #### Optional
@@ -281,6 +293,53 @@ NODE_ENV=production                 # Environment mode
 LOG_LEVEL=info                      # Logging level
 ENABLE_RATE_LIMITING=false          # Enable/disable rate limiting
 ENABLE_STRICT_CORS=false            # Enable/disable strict CORS
+```
+
+### Multiple Email Recipients
+
+The API supports sending emails to multiple recipients:
+
+- **TO_EMAIL**: Primary recipient (required if no other emails configured)
+- **TO_EMAIL1** through **TO_EMAIL10**: Additional recipients (optional)
+- **Maximum**: 11 total email addresses
+- **Sending Order**: TO_EMAIL first, then TO_EMAIL1, TO_EMAIL2, etc.
+- **Delays**: 1 second delay between each email
+- **Logging**: Success/failure logged for each recipient
+
+#### Example Configuration:
+```env
+TO_EMAIL=admin@company.com
+TO_EMAIL1=sales@company.com
+TO_EMAIL2=support@company.com
+TO_EMAIL3=manager@company.com
+```
+
+#### Response Format:
+```json
+{
+  "success": true,
+  "message": "Form submitted and email sent successfully!",
+  "submissionId": "sub_1234567890_abc123",
+  "emailResults": [
+    {
+      "success": true,
+      "envKey": "TO_EMAIL",
+      "email": "admin@company.com",
+      "messageId": "gmail_message_id_1",
+      "timestamp": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "success": true,
+      "envKey": "TO_EMAIL1",
+      "email": "sales@company.com",
+      "messageId": "gmail_message_id_2",
+      "timestamp": "2024-01-15T10:30:01.000Z"
+    }
+  ],
+  "totalSent": 2,
+  "totalFailed": 0,
+  "processingTime": 2500
+}
 ```
 
 ### Gmail API Setup
