@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Submission</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #007bff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .header p {
+            color: #6c757d;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .field {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .field-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .field-value {
+            color: #212529;
+            font-size: 16px;
+            word-wrap: break-word;
+        }
+        .message-field {
+            background-color: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+        .message-field .field-value {
+            white-space: pre-wrap;
+            padding: 10px;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid #bbdefb;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border-top: 1px solid #dee2e6;
+        }
+        .footer h3 {
+            color: #495057;
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .footer-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .footer-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+        .footer-value {
+            color: #212529;
+        }
+        .reply-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+        .reply-button:hover {
+            background-color: #0056b3;
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 20px;
+            }
+            .footer-row {
+                flex-direction: column;
+                margin-bottom: 12px;
+            }
+            .footer-label {
+                margin-bottom: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📧 New Message Received</h1>
+            <p>Form submission from your website</p>
+        </div>
+
+        <div class="content">
+            <div class="field">
+                <div class="field-label">From</div>
+                <div class="field-value">{{name}} &lt;{{email}}&gt;</div>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Subject</div>
+                <div class="field-value">{{subject}}</div>
+            </div>
+
+            {{#if phone}}
+            <div class="field">
+                <div class="field-label">Phone</div>
+                <div class="field-value">{{phone}}</div>
+            </div>
+            {{/if}}
+
+            {{#if company}}
+            <div class="field">
+                <div class="field-label">Company</div>
+                <div class="field-value">{{company}}</div>
+            </div>
+            {{/if}}
+
+            <div class="field message-field">
+                <div class="field-label">Message</div>
+                <div class="field-value">{{message}}</div>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="mailto:{{email}}?subject=Re: {{subject}}" class="reply-button">
+                Reply to {{name}}
+            </a>
+        </div>
+
+        <div class="footer">
+            <h3>📊 Submission Details</h3>
+            <div class="footer-row">
+                <span class="footer-label">Submission ID:</span>
+                <span class="footer-value">{{submissionId}}</span>
+            </div>
+            <div class="footer-row">
+                <span class="footer-label">Date & Time:</span>
+                <span class="footer-value">{{submissionDate}} at {{submissionTime}}</span>
+            </div>
+            <div class="footer-row">
+                <span class="footer-label">IP Address:</span>
+                <span class="footer-value">{{ipAddress}}</span>
+            </div>
+            <div class="footer-row">
+                <span class="footer-label">Template:</span>
+                <span class="footer-value">Simple Email</span>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; color: #6c757d; font-size: 12px;">
+            <p>This email was generated automatically by your contact form.</p>
+            <p>© {{currentYear}} Contact Form System. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

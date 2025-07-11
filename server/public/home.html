@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express.js Form Backend - Live Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .status-badges {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        
+        .badge {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .badge.live {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: rgba(34, 197, 94, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: white;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .response-area {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .response-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        
+        .response-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        
+        .response-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+        }
+        
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .test-btn:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+        }
+        
+        .api-info {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .api-info h3 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+        
+        .api-info code {
+            background: #1e293b;
+            color: #10b981;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        
+        .api-info p {
+            margin-bottom: 0.5rem;
+            color: #475569;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>🚀 Express.js Form Backend</h1>
+            <p>Production-ready form submission API with Gmail integration - Live on Render</p>
+            
+            <div class="status-badges">
+                <div class="badge live">🟢 Live on Render</div>
+                <div class="badge">📍 https://web3prov2.onrender.com</div>
+                <div class="badge">⚡ Real-time Testing</div>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <!-- API Testing Panel -->
+            <div class="card">
+                <h2>🧪 API Testing</h2>
+                <p>Test the live API endpoints directly from this page</p>
+                
+                <div class="test-buttons">
+                    <button class="test-btn" onclick="testHealth()">❤️ Health Check</button>
+                    <button class="test-btn" onclick="testStatus()">📊 API Status</button>
+                    <button class="test-btn" onclick="authorizeGmail()">🔑 Choose Gmail Account</button>
+                    <button class="test-btn" onclick="testGmail()">📧 Gmail Test</button>
+                    <button class="test-btn" onclick="checkCredentials()">📋 Check Credentials</button>
+                    <button class="test-btn" onclick="testStats()">📈 Statistics</button>
+                </div>
+                
+                <div id="testResponse" class="response-area response-info" style="display: none;">
+                    Click any test button above to see API responses...
+                </div>
+            </div>
+            
+            <!-- Form Submission -->
+            <div class="card">
+                <h2>📝 Submit Form</h2>
+                <p>Test the form submission endpoint with real data</p>
+                
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Name *</label>
+                        <input type="text" id="name" name="name" required placeholder="Your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" required placeholder="your@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject">Subject *</label>
+                        <input type="text" id="subject" name="subject" required placeholder="What's this about?">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Message *</label>
+                        <textarea id="message" name="message" required placeholder="Your message here..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone (Optional)</label>
+                        <input type="tel" id="phone" name="phone" placeholder="+1 (555) 123-4567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="company">Company (Optional)</label>
+                        <input type="text" id="company" name="company" placeholder="Your company">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="template_id">Email Template</label>
+                        <select id="template_id" name="template_id">
+                            <option value="default">Default Template</option>
+                            <option value="contact">Contact Form</option>
+                            <option value="inquiry">Business Inquiry</option>
+                            <option value="support">Support Request</option>
+                        </select>
+                    </div>
+                    
+                    <input type="hidden" name="_honey" value="">
+                    
+                    <button type="submit" class="btn" id="submitBtn">
+                        📤 Send Message
+                    </button>
+                </form>
+                
+                <div id="formResponse" class="response-area" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <div class="api-info">
+            <h3>🔗 API Integration Information</h3>
+            <p><strong>Base URL:</strong> <code>https://web3prov2.onrender.com</code></p>
+            <p><strong>Form Endpoint:</strong> <code>POST /submit-form</code></p>
+            <p><strong>Content-Type:</strong> <code>application/json</code></p>
+            <p><strong>CORS:</strong> Open to all origins (*)</p>
+            <p><strong>Rate Limiting:</strong> Disabled for unlimited access</p>
+            <p><strong>Required Fields:</strong> name, email, subject, message</p>
+            <p><strong>Optional Fields:</strong> phone, company, template_id</p>
+            <p><strong>Templates:</strong> default, contact, inquiry, support</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://web3prov2.onrender.com';
+        
+        // Test API endpoints
+        async function testEndpoint(endpoint, method = 'GET') {
+            const responseDiv = document.getElementById('testResponse');
+            responseDiv.style.display = 'block';
+            responseDiv.className = 'response-area response-info';
+            responseDiv.textContent = `Testing ${endpoint}...`;
+            
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                responseDiv.className = response.ok ? 'response-area response-success' : 'response-area response-error';
+                responseDiv.textContent = `Status: ${response.status}\n\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                responseDiv.className = 'response-area response-error';
+                responseDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        function testHealth() {
+            testEndpoint('/health');
+        }
+        
+        function testStatus() {
+            testEndpoint('/status');
+        }
+        
+        function testStats() {
+            testEndpoint('/stats');
+        }
+        
+        function testGmail() {
+            testEndpoint('/test-gmail');
+        }
+        
+        function authorizeGmail() {
+            window.location.href = `${API_BASE}/gmail-auth-select`;
+        }
+        
+        function checkCredentials() {
+            testEndpoint('/credentials-status');
+        }
+        
+        // Form submission
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const responseDiv = document.getElementById('formResponse');
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Sending...';
+            responseDiv.style.display = 'block';
+            responseDiv.className = 'response-area response-info';
+            responseDiv.textContent = 'Submitting form...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/submit-form`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    responseDiv.className = 'response-area response-success';
+                    responseDiv.textContent = `✅ SUCCESS!\n\n${JSON.stringify(result, null, 2)}`;
+                    
+                    // Reset form on success
+                    e.target.reset();
+                } else {
+                    responseDiv.className = 'response-area response-error';
+                    responseDiv.textContent = `❌ ERROR!\n\n${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                responseDiv.className = 'response-area response-error';
+                responseDiv.textContent = `❌ NETWORK ERROR!\n\n${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '📤 Send Message';
+            }
+        });
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testStatus();
+            }, 1000);
+        });
+        
+        // Add navigation buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const navButtons = `
+                <div style="text-align: center; margin: 30px 0; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 12px;">
+                    <h3 style="color: white; margin-bottom: 15px;">🧭 Navigation</h3>
+                    <a href="/" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">📊 Dashboard</a>
+                    <a href="/home" style="background: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">🏠 Home</a>
+                    <a href="/status" style="background: #8b5cf6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">⚡ API Status</a>
+                    <a href="/gmail-setup" style="background: #f59e0b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">📚 Gmail Setup</a>
+                    <a href="/nafij" style="background: #ef4444; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 5px; display: inline-block;">👨‍💻 About Developer</a>
+                </div>
+            `;
+            document.querySelector('.container').insertAdjacentHTML('beforeend', navButtons);
+        });
+    </script>
+</body>
+</html>
