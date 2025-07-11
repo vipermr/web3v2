@@ -6,9 +6,11 @@ const router = express.Router();
 // Test Gmail credentials endpoint
 router.get('/test-gmail', async (req, res) => {
   try {
+    console.log('🧪 Testing Gmail credentials...');
     const result = await testGmailCredentials();
     
     if (result.success) {
+      console.log('✅ Gmail test successful:', result.message);
       res.json({
         success: true,
         message: result.message,
@@ -19,6 +21,7 @@ router.get('/test-gmail', async (req, res) => {
         }
       });
     } else {
+      console.log('❌ Gmail test failed:', result.error);
       res.status(400).json({
         success: false,
         error: result.error,
@@ -28,6 +31,7 @@ router.get('/test-gmail', async (req, res) => {
       });
     }
   } catch (error) {
+    console.log('💥 Gmail test exception:', error.message);
     res.status(500).json({
       success: false,
       error: 'Failed to test Gmail credentials',
