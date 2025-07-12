@@ -104,7 +104,7 @@ const formSchema = Joi.object({
     }),
   
   template_id: Joi.string()
-    .valid('default', 'contact', 'inquiry', 'support')
+    .valid('default', 'contact', 'inquiry', 'support', 'newsletter', 'quote', 'booking', 'feedback', 'partnership', 'job', 'event', 'dark-pro', 'dark-elite', 'premium', 'executive')
     .optional()
     .default('default'),
   

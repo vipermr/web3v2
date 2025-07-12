@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Luxury Communication</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+        .container {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 24px;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            position: relative;
+        }
+        .luxury-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #d4af37, #ffd700, #d4af37);
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="luxury" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(212,175,55,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23luxury)"/></svg>');
+        }
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 36px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #ffffff, #d4af37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p {
+            margin: 15px 0 0 0;
+            font-size: 18px;
+            font-weight: 300;
+            opacity: 0.9;
+            letter-spacing: 1px;
+        }
+        .luxury-badge {
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%);
+            color: #1a1a1a;
+            padding: 20px 40px;
+            text-align: center;
+            margin: 40px;
+            font-weight: 600;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 16px 32px rgba(212, 175, 55, 0.3);
+            border-radius: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .luxury-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.1) 2px,
+                rgba(255, 255, 255, 0.1) 4px
+            );
+        }
+        .content {
+            padding: 50px;
+        }
+        .premium-card {
+            background: #ffffff;
+            padding: 40px;
+            margin-bottom: 40px;
+            border: 2px solid #f8f9fa;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.04);
+            position: relative;
+        }
+        .premium-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #d4af37, #ffd700, #d4af37);
+        }
+        .premium-card h3 {
+            color: #1a1a1a;
+            margin: 0 0 30px 0;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .field {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #fafbfc;
+            border: 1px solid #e9ecef;
+            position: relative;
+        }
+        .field::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: #d4af37;
+        }
+        .field-label {
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .field-value {
+            color: #1a1a1a;
+            font-size: 18px;
+            font-weight: 400;
+            word-wrap: break-word;
+        }
+        .message-field {
+            background: #f8f9fa;
+            border-color: #d4af37;
+        }
+        .message-field .field-value {
+            white-space: pre-wrap;
+            padding: 25px;
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+        .luxury-actions {
+            background: linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%);
+            padding: 40px;
+            margin: 40px 0;
+            border: 2px solid #e9ecef;
+            text-align: center;
+        }
+        .luxury-actions h3 {
+            color: #1a1a1a;
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        .luxury-btn {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            padding: 18px 36px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            margin: 12px;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 16px rgba(26, 26, 26, 0.2);
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 2px solid transparent;
+        }
+        .luxury-btn:hover {
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+            color: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(212, 175, 55, 0.3);
+            border-color: #d4af37;
+        }
+        .premium-details {
+            background: #ffffff;
+            padding: 40px;
+            margin-top: 40px;
+            border: 2px solid #f8f9fa;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04);
+        }
+        .premium-details h3 {
+            color: #1a1a1a;
+            margin: 0 0 25px 0;
+            font-size: 22px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .detail-item {
+            padding: 15px;
+            background: #fafbfc;
+            border: 1px solid #e9ecef;
+        }
+        .detail-label {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            color: #1a1a1a;
+            font-family: 'Monaco', monospace;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 40px;
+            background: #1a1a1a;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        .premium-watermark {
+            background: linear-gradient(135deg, #d4af37, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .content { padding: 25px; }
+            .details-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="luxury-border"></div>
+        <div class="header">
+            <div class="header-content">
+                <h1>💎 Premium Luxury</h1>
+                <p>Exclusive communication experience</p>
+            </div>
+        </div>
+
+        <div class="luxury-badge">
+            ✨ Premium Luxury Template
+        </div>
+
+        <div class="content">
+            <div class="premium-card">
+                <h3>Distinguished Contact</h3>
+                <div class="field">
+                    <div class="field-label">Full Name</div>
+                    <div class="field-value">{{name}}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Email Address</div>
+                    <div class="field-value">{{email}}</div>
+                </div>
+                {{#if phone}}
+                <div class="field">
+                    <div class="field-label">Contact Number</div>
+                    <div class="field-value">{{phone}}</div>
+                </div>
+                {{/if}}
+                {{#if company}}
+                <div class="field">
+                    <div class="field-label">Organization</div>
+                    <div class="field-value">{{company}}</div>
+                </div>
+                {{/if}}
+            </div>
+
+            <div class="field">
+                <div class="field-label">Communication Subject</div>
+                <div class="field-value">{{subject}}</div>
+            </div>
+
+            <div class="field message-field">
+                <div class="field-label">Distinguished Message</div>
+                <div class="field-value">{{message}}</div>
+            </div>
+
+            <div class="luxury-actions">
+                <h3>Exclusive Actions</h3>
+                <a href="mailto:{{email}}?subject=Re: {{subject}} - Premium Response" class="luxury-btn">
+                    Respond
+                </a>
+                {{#if phone}}
+                <a href="tel:{{phone}}" class="luxury-btn">
+                    Connect
+                </a>
+                {{/if}}
+            </div>
+
+            <div class="premium-details">
+                <h3>Communication Details</h3>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Reference ID</div>
+                        <div class="detail-value">{{submissionId}}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Received</div>
+                        <div class="detail-value">{{submissionDate}} {{submissionTime}}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Template</div>
+                        <div class="detail-value">Premium Luxury</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Classification</div>
+                        <div class="detail-value">Premium Tier</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Source</div>
+                        <div class="detail-value">{{ipAddress}}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Platform</div>
+                        <div class="detail-value">{{browserInfo}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p class="premium-watermark">Premium Luxury Suite</p>
+                <p>This distinguished communication was processed using our premium luxury template.</p>
+                <p>© {{currentYear}} Premium Communication Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
