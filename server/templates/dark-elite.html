@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Elite - Executive Communication</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #f8fafc;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: radial-gradient(ellipse at top, #0f172a 0%, #020617 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            border-radius: 24px;
+            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(148, 163, 184, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
+        }
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.1), transparent, rgba(139, 92, 246, 0.1), transparent);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        .header h1 {
+            color: #f1f5f9;
+            margin: 0;
+            font-size: 36px;
+            font-weight: 900;
+            text-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            background: linear-gradient(135deg, #f1f5f9, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p {
+            color: #94a3b8;
+            margin: 15px 0 0 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .elite-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 24px;
+            text-align: center;
+            margin: 40px;
+            font-weight: 800;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 16px 32px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .elite-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        .content {
+            padding: 50px;
+        }
+        .executive-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
+            padding: 35px;
+            border-radius: 20px;
+            margin-bottom: 35px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+        }
+        .executive-card h3 {
+            color: #f1f5f9;
+            margin: 0 0 25px 0;
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .field {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 16px;
+            border-left: 4px solid transparent;
+            background-image: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)), 
+                              linear-gradient(135deg, #3b82f6, #8b5cf6);
+            background-origin: border-box;
+            background-clip: content-box, border-box;
+            backdrop-filter: blur(10px);
+        }
+        .field-label {
+            font-weight: 800;
+            color: #a855f7;
+            margin-bottom: 10px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .field-value {
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+        .message-field {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), 
+                              linear-gradient(135deg, #8b5cf6, #ec4899);
+        }
+        .message-field .field-value {
+            white-space: pre-wrap;
+            padding: 25px;
+            background: rgba(2, 6, 23, 0.9);
+            border-radius: 16px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+        .executive-actions {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            padding: 35px;
+            border-radius: 20px;
+            margin: 35px 0;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            text-align: center;
+            backdrop-filter: blur(20px);
+        }
+        .executive-actions h3 {
+            color: #f1f5f9;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 800;
+        }
+        .action-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            padding: 18px 36px;
+            text-decoration: none;
+            border-radius: 16px;
+            font-weight: 700;
+            display: inline-block;
+            margin: 12px;
+            transition: all 0.4s ease;
+            box-shadow: 0 12px 24px rgba(59, 130, 246, 0.3);
+            font-size: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        .action-btn:hover::before {
+            left: 100%;
+        }
+        .action-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.4);
+        }
+        .analytics {
+            background: rgba(2, 6, 23, 0.9);
+            padding: 35px;
+            border-radius: 20px;
+            margin-top: 35px;
+            border: 1px solid rgba(30, 41, 59, 0.5);
+        }
+        .analytics h3 {
+            color: #e2e8f0;
+            margin: 0 0 25px 0;
+            font-size: 22px;
+            font-weight: 800;
+        }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .analytics-item {
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .analytics-label {
+            color: #64748b;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .analytics-value {
+            color: #f1f5f9;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 14px;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 40px;
+            background: rgba(2, 6, 23, 0.8);
+            border-radius: 20px;
+            color: #64748b;
+            font-size: 14px;
+            border: 1px solid rgba(30, 41, 59, 0.5);
+        }
+        .elite-watermark {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .content { padding: 25px; }
+            .analytics-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>⚡ Dark Elite</h1>
+                <p>Executive-grade communication platform</p>
+            </div>
+        </div>
+
+        <div class="elite-badge">
+            💎 Elite Premium Template
+        </div>
+
+        <div class="content">
+            <div class="executive-card">
+                <h3>👑 Executive Contact</h3>
+                <div class="field">
+                    <div class="field-label">Executive Name</div>
+                    <div class="field-value">{{name}}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Email Address</div>
+                    <div class="field-value">{{email}}</div>
+                </div>
+                {{#if phone}}
+                <div class="field">
+                    <div class="field-label">Direct Line</div>
+                    <div class="field-value">{{phone}}</div>
+                </div>
+                {{/if}}
+                {{#if company}}
+                <div class="field">
+                    <div class="field-label">Organization</div>
+                    <div class="field-value">{{company}}</div>
+                </div>
+                {{/if}}
+            </div>
+
+            <div class="field">
+                <div class="field-label">Communication Subject</div>
+                <div class="field-value">{{subject}}</div>
+            </div>
+
+            <div class="field message-field">
+                <div class="field-label">Executive Message</div>
+                <div class="field-value">{{message}}</div>
+            </div>
+
+            <div class="executive-actions">
+                <h3>🚀 Executive Actions</h3>
+                <a href="mailto:{{email}}?subject=Re: {{subject}} - Executive Response" class="action-btn">
+                    📧 Executive Reply
+                </a>
+                {{#if phone}}
+                <a href="tel:{{phone}}" class="action-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    📞 Priority Call
+                </a>
+                {{/if}}
+            </div>
+
+            <div class="analytics">
+                <h3>📊 Communication Analytics</h3>
+                <div class="analytics-grid">
+                    <div class="analytics-item">
+                        <div class="analytics-label">Message ID</div>
+                        <div class="analytics-value">{{submissionId}}</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-label">Timestamp</div>
+                        <div class="analytics-value">{{submissionDate}} {{submissionTime}}</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-label">Template</div>
+                        <div class="analytics-value">Dark Elite Premium</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-label">Priority</div>
+                        <div class="analytics-value">Executive Level</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-label">Source IP</div>
+                        <div class="analytics-value">{{ipAddress}}</div>
+                    </div>
+                    <div class="analytics-item">
+                        <div class="analytics-label">User Agent</div>
+                        <div class="analytics-value">{{browserInfo}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p class="elite-watermark">Dark Elite Premium Suite</p>
+                <p>This executive communication was processed using our highest-tier premium template.</p>
+                <p>© {{currentYear}} Elite Communication Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

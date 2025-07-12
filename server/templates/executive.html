@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Suite Communication</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+        }
+        .container {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 16px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(52, 73, 94, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .executive-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .executive-header::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #3498db, #2980b9, #3498db);
+            z-index: -1;
+        }
+        .executive-header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .executive-header p {
+            margin: 12px 0 0 0;
+            font-size: 16px;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+        .executive-badge {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 16px 32px;
+            text-align: center;
+            margin: 30px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 8px 16px rgba(52, 152, 219, 0.3);
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .content {
+            padding: 40px;
+        }
+        .executive-profile {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 2px solid #dee2e6;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .executive-profile h3 {
+            color: #2c3e50;
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .field {
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #ffffff;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .field-label {
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 6px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .field-value {
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+        .message-field {
+            background: #f8f9fa;
+            border-left-color: #2980b9;
+        }
+        .message-field .field-value {
+            white-space: pre-wrap;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            font-family: 'Georgia', serif;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        .executive-actions {
+            background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            border: 2px solid #95a5a6;
+            text-align: center;
+        }
+        .executive-actions h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .exec-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .exec-btn:hover {
+            background: linear-gradient(135deg, #2980b9 0%, #1f4e79 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4);
+        }
+        .exec-btn.secondary {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+        .exec-btn.secondary:hover {
+            background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+        }
+        .executive-summary {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border: 2px solid #ecf0f1;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .executive-summary h3 {
+            color: #2c3e50;
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .summary-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        .summary-label {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .summary-value {
+            color: #2c3e50;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-size: 13px;
+        }
+        .executive-watermark {
+            color: #3498db;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .content { padding: 20px; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .executive-header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="executive-header">
+            <h1>🚀 Executive Suite</h1>
+            <p>Professional executive communication platform</p>
+        </div>
+
+        <div class="executive-badge">
+            ⭐ Executive Premium Template
+        </div>
+
+        <div class="content">
+            <div class="executive-profile">
+                <h3>Executive Contact Profile</h3>
+                <div class="field">
+                    <div class="field-label">Executive Name</div>
+                    <div class="field-value">{{name}}</div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Email Address</div>
+                    <div class="field-value">{{email}}</div>
+                </div>
+                {{#if phone}}
+                <div class="field">
+                    <div class="field-label">Direct Line</div>
+                    <div class="field-value">{{phone}}</div>
+                </div>
+                {{/if}}
+                {{#if company}}
+                <div class="field">
+                    <div class="field-label">Organization</div>
+                    <div class="field-value">{{company}}</div>
+                </div>
+                {{/if}}
+            </div>
+
+            <div class="field">
+                <div class="field-label">Executive Subject</div>
+                <div class="field-value">{{subject}}</div>
+            </div>
+
+            <div class="field message-field">
+                <div class="field-label">Executive Communication</div>
+                <div class="field-value">{{message}}</div>
+            </div>
+
+            <div class="executive-actions">
+                <h3>Executive Actions</h3>
+                <a href="mailto:{{email}}?subject=Re: {{subject}} - Executive Response" class="exec-btn">
+                    📧 Executive Reply
+                </a>
+                {{#if phone}}
+                <a href="tel:{{phone}}" class="exec-btn secondary">
+                    📞 Priority Call
+                </a>
+                {{/if}}
+            </div>
+
+            <div class="executive-summary">
+                <h3>Executive Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <div class="summary-label">Reference ID</div>
+                        <div class="summary-value">{{submissionId}}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Date & Time</div>
+                        <div class="summary-value">{{submissionDate}} {{submissionTime}}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Template</div>
+                        <div class="summary-value">Executive Suite</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Priority</div>
+                        <div class="summary-value">Executive Level</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Source IP</div>
+                        <div class="summary-value">{{ipAddress}}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Platform</div>
+                        <div class="summary-value">{{browserInfo}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p class="executive-watermark">Executive Suite Premium</p>
+                <p>This executive communication was processed using our professional executive template.</p>
+                <p>© {{currentYear}} Executive Communication Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
