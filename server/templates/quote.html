@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote Request</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #fef3c7;
+        }
+        .header h1 {
+            color: #d97706;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .quote-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .client-info {
+            background: #fffbeb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #f59e0b;
+        }
+        .field {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #fffbeb;
+            border-radius: 8px;
+            border-left: 3px solid #f59e0b;
+        }
+        .field-label {
+            font-weight: 600;
+            color: #92400e;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .field-value {
+            color: #1f2937;
+            font-size: 16px;
+        }
+        .message-field {
+            background: #fef3c7;
+            border-left-color: #d97706;
+        }
+        .message-field .field-value {
+            white-space: pre-wrap;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #fed7aa;
+        }
+        .next-steps {
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid #bbf7d0;
+        }
+        .next-steps h3 {
+            color: #059669;
+            margin: 0 0 15px 0;
+        }
+        .next-steps ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #047857;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            color: #64748b;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Quote Request</h1>
+            <p>New pricing inquiry received</p>
+        </div>
+
+        <div class="quote-badge">
+            📋 Quote Request #{{submissionId}}
+        </div>
+
+        <div class="client-info">
+            <h3>👤 Client Information</h3>
+            <div class="field">
+                <div class="field-label">Name</div>
+                <div class="field-value">{{name}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Email</div>
+                <div class="field-value">{{email}}</div>
+            </div>
+            {{#if phone}}
+            <div class="field">
+                <div class="field-label">Phone</div>
+                <div class="field-value">{{phone}}</div>
+            </div>
+            {{/if}}
+            {{#if company}}
+            <div class="field">
+                <div class="field-label">Company</div>
+                <div class="field-value">{{company}}</div>
+            </div>
+            {{/if}}
+        </div>
+
+        <div class="field">
+            <div class="field-label">Project/Service</div>
+            <div class="field-value">{{subject}}</div>
+        </div>
+
+        <div class="field message-field">
+            <div class="field-label">Project Details</div>
+            <div class="field-value">{{message}}</div>
+        </div>
+
+        <div class="next-steps">
+            <h3>📋 Next Steps</h3>
+            <ul>
+                <li>Review project requirements</li>
+                <li>Prepare detailed quote within 24-48 hours</li>
+                <li>Schedule consultation call if needed</li>
+                <li>Send comprehensive proposal</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p><strong>Quote ID:</strong> {{submissionId}}</p>
+            <p><strong>Received:</strong> {{submissionDate}} at {{submissionTime}}</p>
+            <p>We'll get back to you with a detailed quote soon!</p>
+            <p>© {{currentYear}} Quote Management System. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #d1fae5;
+        }
+        .header h1 {
+            color: #059669;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .application-badge {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .candidate-info {
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 4px solid #059669;
+        }
+        .field {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f0fdf4;
+            border-radius: 8px;
+            border-left: 3px solid #059669;
+        }
+        .field-label {
+            font-weight: 600;
+            color: #047857;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .field-value {
+            color: #1f2937;
+            font-size: 16px;
+        }
+        .message-field {
+            background: #d1fae5;
+            border-left-color: #047857;
+        }
+        .message-field .field-value {
+            white-space: pre-wrap;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #a7f3d0;
+        }
+        .process {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid #bfdbfe;
+        }
+        .process h3 {
+            color: #2563eb;
+            margin: 0 0 15px 0;
+        }
+        .process ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #1d4ed8;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            color: #64748b;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💼 Job Application</h1>
+            <p>New candidate application received</p>
+        </div>
+
+        <div class="application-badge">
+            📋 Application #{{submissionId}}
+        </div>
+
+        <div class="candidate-info">
+            <h3>👤 Candidate Information</h3>
+            <div class="field">
+                <div class="field-label">Full Name</div>
+                <div class="field-value">{{name}}</div>
+            </div>
+            <div class="field">
+                <div class="field-label">Email</div>
+                <div class="field-value">{{email}}</div>
+            </div>
+            {{#if phone}}
+            <div class="field">
+                <div class="field-label">Phone</div>
+                <div class="field-value">{{phone}}</div>
+            </div>
+            {{/if}}
+            {{#if company}}
+            <div class="field">
+                <div class="field-label">Current Company</div>
+                <div class="field-value">{{company}}</div>
+            </div>
+            {{/if}}
+        </div>
+
+        <div class="field">
+            <div class="field-label">Position Applied For</div>
+            <div class="field-value">{{subject}}</div>
+        </div>
+
+        <div class="field message-field">
+            <div class="field-label">Cover Letter / Additional Information</div>
+            <div class="field-value">{{message}}</div>
+        </div>
+
+        <div class="process">
+            <h3>📋 Hiring Process</h3>
+            <ul>
+                <li>Application review (2-3 business days)</li>
+                <li>Initial screening call if qualified</li>
+                <li>Technical/skills assessment</li>
+                <li>Interview rounds with team</li>
+                <li>Reference checks and final decision</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p><strong>Application ID:</strong> {{submissionId}}</p>
+            <p><strong>Submitted:</strong> {{submissionDate}} at {{submissionTime}}</p>
+            <p>Thank you for your interest in joining our team!</p>
+            <p>© {{currentYear}} HR Management System. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
