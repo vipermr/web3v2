@@ -401,6 +401,9 @@ router.get('/nafij', (req, res) => {
                 <a href="https://linkedin.com/in/nafij" class="contact-link" target="_blank">
                     💼 LinkedIn
                 </a>
+                <a href="/contact" class="contact-link">
+                    📝 Contact Form
+                </a>
                 <a href="/" class="contact-link">
                     🏠 Back to API
                 </a>

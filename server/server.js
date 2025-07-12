@@ -309,6 +309,39 @@ app.get('/home', (req, res) => {
   }
 });
 
+// Contact form route - Serve the contact form
+app.get('/contact', (req, res) => {
+  const contactFormPath = path.join(publicPath, 'contact-form.html');
+  
+  if (fs.existsSync(contactFormPath)) {
+    res.sendFile(contactFormPath);
+  } else {
+    res.status(404).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Contact Form Not Found</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .error { color: #dc3545; font-size: 18px; margin-bottom: 20px; }
+          a { color: #007bff; text-decoration: none; }
+          a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📧 Contact Form</h1>
+          <div class="error">❌ Contact form file not found</div>
+          <p>The contact form is not available at this time.</p>
+          <p><a href="/">← Back to Home</a> | <a href="/status">API Status</a></p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+});
+
 // Catch all handler: send back React's index.html file for any non-API routes
 app.get('*', (req, res) => {
   // Skip API routes - they should return JSON responses
@@ -317,12 +350,13 @@ app.get('*', (req, res) => {
       req.path.startsWith('/status') || 
       req.path.startsWith('/stats') ||
       req.path.startsWith('/nafij') ||
+      req.path.startsWith('/contact') ||
       req.path.startsWith('/api')) {
     return res.status(404).json({
       success: false,
       error: 'API endpoint not found',
       code: 'NOT_FOUND',
-      availableEndpoints: ['/health', '/status', '/submit-form', '/stats', '/nafij']
+      availableEndpoints: ['/health', '/status', '/submit-form', '/stats', '/nafij', '/contact']
     });
   }
   
@@ -388,6 +422,7 @@ app.listen(PORT, () => {
   logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
   logger.info(`📋 API endpoint: http://localhost:${PORT}/submit-form`);
   logger.info(`🏠 Frontend: http://localhost:${PORT}/ and http://localhost:${PORT}/home`);
+  logger.info(`📧 Contact Form: http://localhost:${PORT}/contact`);
   
   // Check if React build exists
   if (fs.existsSync(indexPath)) {

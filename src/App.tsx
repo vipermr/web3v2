@@ -501,6 +501,12 @@ function App() {
                   🏠 Live Demo
                 </button>
                 <button
+                  onClick={() => window.open(`${getApiUrl()}/contact`, '_blank')}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                >
+                  📧 Contact Form
+                </button>
+                <button
                   onClick={() => window.open(`${getApiUrl()}/gmail-setup`, '_blank')}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
