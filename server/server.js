@@ -203,6 +203,39 @@ app.use('/', aboutRoutes);
 app.use('/', gmailTestRoutes);
 app.use('/', oauth2Routes);
 
+// Contact page route
+app.get('/contact', (req, res) => {
+  const contactPath = path.join(publicPath, 'contact.html');
+  
+  if (fs.existsSync(contactPath)) {
+    res.sendFile(contactPath);
+  } else {
+    res.status(404).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Contact Page Not Found</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .error { color: #dc3545; font-size: 18px; margin-bottom: 20px; }
+          a { color: #007bff; text-decoration: none; }
+          a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📧 Contact Page</h1>
+          <div class="error">Contact page not found at expected location</div>
+          <p>The contact.html file should be located at: <code>server/public/contact.html</code></p>
+          <p><a href="/">← Back to Home</a> | <a href="/home">Live Demo</a> | <a href="/status">API Status</a></p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
