@@ -10,7 +10,7 @@ import aboutRoutes from './routes/aboutRoutes.js';
 import gmailTestRoutes from './routes/gmailTestRoutes.js';
 import oauth2Routes from './routes/oauth2Routes.js';
 import formToRoutes from './routes/formToRoutes.js';
-import formToRoutes from './routes/formToRoutes.js';
+import credentialsRoutes from './routes/credentialsRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -205,7 +205,7 @@ app.use('/', aboutRoutes);
 app.use('/', gmailTestRoutes);
 app.use('/', oauth2Routes);
 app.use('/', formToRoutes);
-app.use('/', formToRoutes);
+app.use('/', credentialsRoutes);
 
 // Contact page route
 app.get('/contact', (req, res) => {
