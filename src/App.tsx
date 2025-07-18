@@ -176,6 +176,20 @@ function App() {
               <Globe className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
               Live Demo
             </button>
+            <button
+              onClick={() => window.open(`${getApiUrl()}/form-to`, '_blank')}
+              className="group px-8 py-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+            >
+              <Mail className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+              Form-To Demo
+            </button>
+            <button
+              onClick={() => window.open(`${getApiUrl()}/form-to`, '_blank')}
+              className="group px-8 py-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-xl hover:from-orange-700 hover:to-amber-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+            >
+              <Mail className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+              Form-To Demo
+            </button>
             <div className="px-8 py-4 bg-white/80 backdrop-blur-sm rounded-xl text-sm text-blue-800 font-mono border border-blue-200 shadow-md flex items-center justify-center gap-2">
               <Globe className="w-4 h-4" />
               Live API: {getApiUrl()}
@@ -484,6 +498,8 @@ function App() {
                 <p><strong>Health:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/health</code></p>
                 <p><strong>Endpoint:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/submit-form</code></p>
                 <p><strong>Live Demo:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/home</code></p>
+                <p><strong>Form-To:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/form-to</code></p>
+                <p><strong>Form-To:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/form-to</code></p>
                 <p><strong>Gmail Setup:</strong> <code className="bg-white px-2 py-1 rounded">{getApiUrl()}/gmail-setup</code></p>
                 <p><strong>Method:</strong> POST</p>
                 <p><strong>Content-Type:</strong> application/json</p>
@@ -518,6 +534,18 @@ function App() {
                 >
                   👨‍💻 About Developer
                 </button>
+                <button
+                  onClick={() => window.open(`${getApiUrl()}/form-to`, '_blank')}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                >
+                  📧 Form-To Demo
+                </button>
+                <button
+                  onClick={() => window.open(`${getApiUrl()}/form-to`, '_blank')}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                >
+                  📧 Form-To Demo
+                </button>
               </div>
             </div>
           </div>
@@ -536,7 +564,7 @@ function App() {
             <div>
               <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
-                JavaScript/Fetch
+                JavaScript/Fetch (Standard Form)
               </h3>
               <pre className="bg-gray-900 text-green-400 p-6 rounded-xl text-sm overflow-x-auto border border-gray-700 shadow-inner">
 {`fetch('${getApiUrl()}/submit-form', {
@@ -560,7 +588,35 @@ function App() {
             <div>
               <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                cURL
+                JavaScript/Fetch (Form-To)
+              </h3>
+              <pre className="bg-gray-900 text-green-400 p-6 rounded-xl text-sm overflow-x-auto border border-gray-700 shadow-inner">
+{`fetch('${getApiUrl()}/form-to', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    name: 'John Doe',
+    email: 'john@example.com',
+    subject: 'Custom Destinations',
+    message: 'Send to multiple emails',
+    FROM_TO1: 'recipient1@example.com',
+    FROM_TO2: 'recipient2@example.com',
+    template_id: 'contact'
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data));`}
+              </pre>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6 mt-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                cURL (Standard Form)
               </h3>
               <pre className="bg-gray-900 text-green-400 p-6 rounded-xl text-sm overflow-x-auto border border-gray-700 shadow-inner">
 {`curl -X POST ${getApiUrl()}/submit-form \\
@@ -571,6 +627,26 @@ function App() {
     "subject": "Hello",
     "message": "Test message",
     "template_id": "contact"
+  }'`}
+              </pre>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <span className="w-2 h-2 bg-purple-400 rounded-full"></span>
+                cURL (Form-To)
+              </h3>
+              <pre className="bg-gray-900 text-green-400 p-6 rounded-xl text-sm overflow-x-auto border border-gray-700 shadow-inner">
+{`curl -X POST ${getApiUrl()}/form-to \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "subject": "Custom Destinations",
+    "message": "Send to multiple emails",
+    "FROM_TO1": "recipient1@example.com",
+    "FROM_TO2": "recipient2@example.com",
+    "FROM_TO3": "recipient3@example.com"
   }'`}
               </pre>
             </div>

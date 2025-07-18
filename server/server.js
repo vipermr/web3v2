@@ -9,6 +9,8 @@ import formRoutes from './routes/formRoutes.js';
 import aboutRoutes from './routes/aboutRoutes.js';
 import gmailTestRoutes from './routes/gmailTestRoutes.js';
 import oauth2Routes from './routes/oauth2Routes.js';
+import formToRoutes from './routes/formToRoutes.js';
+import formToRoutes from './routes/formToRoutes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -202,6 +204,8 @@ app.use('/', formRoutes);
 app.use('/', aboutRoutes);
 app.use('/', gmailTestRoutes);
 app.use('/', oauth2Routes);
+app.use('/', formToRoutes);
+app.use('/', formToRoutes);
 
 // Contact page route
 app.get('/contact', (req, res) => {
@@ -236,6 +240,38 @@ app.get('/contact', (req, res) => {
   }
 });
 
+// Form-To page route
+app.get('/form-to', (req, res) => {
+  const formToPath = path.join(publicPath, 'form-to.html');
+  
+  if (fs.existsSync(formToPath)) {
+    res.sendFile(formToPath);
+  } else {
+    res.status(404).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Form-To Page Not Found</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+          .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .error { color: #dc3545; font-size: 18px; margin-bottom: 20px; }
+          a { color: #007bff; text-decoration: none; }
+          a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📧 Form-To Page</h1>
+          <div class="error">Form-To page not found at expected location</div>
+          <p>The form-to.html file should be located at: <code>server/public/form-to.html</code></p>
+          <p><a href="/">← Back to Home</a> | <a href="/home">Live Demo</a> | <a href="/status">API Status</a></p>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+});
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -261,7 +297,8 @@ app.get('/status', (req, res) => {
       submit: '/submit-form',
       stats: '/stats',
       status: '/status',
-      about: '/nafij'
+      about: '/nafij',
+      formTo: '/form-to'
     },
     documentation: 'https://github.com/yourusername/yourrepo#readme',
     timestamp: new Date().toISOString()
@@ -280,7 +317,8 @@ app.get('/api', (req, res) => {
       health: '/health',
       submit: '/submit-form',
       stats: '/stats',
-      about: '/nafij'
+      about: '/nafij',
+      formTo: '/form-to'
     },
     timestamp: new Date().toISOString()
   });
@@ -350,12 +388,13 @@ app.get('*', (req, res) => {
       req.path.startsWith('/status') || 
       req.path.startsWith('/stats') ||
       req.path.startsWith('/nafij') ||
+      req.path.startsWith('/form-to') ||
       req.path.startsWith('/api')) {
     return res.status(404).json({
       success: false,
       error: 'API endpoint not found',
       code: 'NOT_FOUND',
-      availableEndpoints: ['/health', '/status', '/submit-form', '/stats', '/nafij']
+      availableEndpoints: ['/health', '/status', '/submit-form', '/stats', '/nafij', '/form-to']
     });
   }
   
